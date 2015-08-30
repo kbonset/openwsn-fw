@@ -87,6 +87,7 @@ typedef struct {
    uint16_t   inputCrc;
    uint8_t    inputBufFill;
    uint8_t    inputBuf[SERIAL_INPUT_BUFFER_SIZE];
+   uint8_t    lastInputBufFill;
    // output
    bool       outputBufFilled;
    uint16_t   outputCrc;
