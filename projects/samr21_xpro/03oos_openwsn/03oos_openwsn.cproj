@@ -27,15 +27,15 @@
     <eraseonlaunchrule>0</eraseonlaunchrule>
     <AsfFrameworkConfig>
       <framework-data>
-  <options />
-  <configurations />
-  <files />
-  <documentation help="" />
-  <offline-documentation help="" />
-  <dependencies>
-    <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.20.1" />
-  </dependencies>
-</framework-data>
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.20.1" />
+        </dependencies>
+      </framework-data>
     </AsfFrameworkConfig>
     <avrtool>com.atmel.avrdbg.tool.edbg</avrtool>
     <avrtoolinterface>SWD</avrtoolinterface>
@@ -185,6 +185,8 @@
       <Value>../../../../openstack/cross-layers</Value>
       <Value>../../../../openstack</Value>
       <Value>../../../../bsp/boards/samr21_xpro/drivers/inc</Value>
+      <Value>../../../../bsp/boards/common</Value>
+      <Value>../../../../openapps/uinject</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -234,6 +236,10 @@
     <Compile Include="..\..\..\openstack\02b-MAChigh\sixtop.c">
       <SubType>compile</SubType>
       <Link>openstack\02b-MAChigh\sixtop.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\common\dummy_crypto_engine.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\common\dummy_crypto_engine.c</Link>
     </Compile>
     <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\base_type.h">
       <SubType>compile</SubType>
@@ -391,6 +397,10 @@
       <SubType>compile</SubType>
       <Link>openstack\02a-MAClow\IEEE802154E.c</Link>
     </Compile>
+    <Compile Include="..\..\..\openstack\02a-MAClow\IEEE802154_dummy_security.c">
+      <SubType>compile</SubType>
+      <Link>openstack\02a-MAClow\IEEE802154_dummy_security.c</Link>
+    </Compile>
     <Compile Include="..\..\..\openstack\02a-MAClow\topology.c">
       <SubType>compile</SubType>
       <Link>openstack\02a-MAClow\topology.c</Link>
@@ -499,6 +509,10 @@
       <SubType>compile</SubType>
       <Link>openapps\rrt\rrt.c</Link>
     </Compile>
+    <Compile Include="..\..\..\openapps\uinject\uinject.c">
+      <SubType>compile</SubType>
+      <Link>openapps\uinject\uinject.c</Link>
+    </Compile>
     <Compile Include="cmsis\src\startup_samr21.c">
       <SubType>compile</SubType>
     </Compile>
@@ -509,6 +523,7 @@
   <ItemGroup>
     <Folder Include="bsp" />
     <Folder Include="bsp\boards" />
+    <Folder Include="bsp\boards\common" />
     <Folder Include="bsp\boards\samr21_xpro" />
     <Folder Include="chips" />
     <Folder Include="chips\at86rf233" />
@@ -537,6 +552,7 @@
     <Folder Include="openapps\techo" />
     <Folder Include="openapps\tohlone" />
     <Folder Include="openapps\uecho" />
+    <Folder Include="openapps\uinject" />
     <Folder Include="openapps\rrt" />
     <Folder Include="openstack\cross-layers" />
   </ItemGroup>
