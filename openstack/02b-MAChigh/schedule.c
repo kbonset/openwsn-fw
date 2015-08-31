@@ -47,7 +47,7 @@ void schedule_init() {
    for (running_slotOffset=start_slotOffset;running_slotOffset<start_slotOffset+NUMSERIALRX;running_slotOffset++) {
       schedule_addActiveSlot(
          running_slotOffset,                    // slot offset
-         CELLTYPE_SERIALRX,                     // type of slot
+         (running_slotOffset==start_slotOffset ? CELLTYPE_SERIALRX : CELLTYPE_MORESERIALRX),  // type of slot
          FALSE,                                 // shared?
          0,                                     // channel offset
          &temp_neighbor                         // neighbor
