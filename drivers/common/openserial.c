@@ -80,6 +80,7 @@ void openserial_init() {
    openserial_vars.busyReceiving       = FALSE;
    openserial_vars.inputEscaping       = FALSE;
    openserial_vars.inputBufFill        = 0;
+   openserial_vars.lastInputBufFill    = 0;
    
    // ouput
    openserial_vars.outputBufFilled     = FALSE;
@@ -288,9 +289,13 @@ void openserial_startInput() {
    uart_enableInterrupts();       // Enable USCI_A1 TX & RX interrupt
    
    DISABLE_INTERRUPTS();
-   openserial_vars.busyReceiving  = FALSE;
+   openserial_vars.busyReceiving  = openserial_vars.lastInputBufFill>0 ? TRUE : FALSE;
    openserial_vars.mode           = MODE_INPUT;
    openserial_vars.reqFrameIdx    = 0;
+   if (openserial_vars.lastInputBufFill>0) {
+       openserial_vars.inputBufFill = openserial_vars.lastInputBufFill;
+       openserial_vars.lastInputBufFill = 0;
+   }
 #ifdef FASTSIM
    uart_writeBufferByLen_FASTSIM(
       openserial_vars.reqFrame,
@@ -410,6 +415,9 @@ void openserial_stop() {
       openserial_printError(COMPONENT_OPENSERIAL,ERR_BUSY_RECEIVING,
                                   (errorparameter_t)0,
                                   (errorparameter_t)inputBufFill);
+      DISABLE_INTERRUPTS();
+      openserial_vars.lastInputBufFill = inputBufFill;
+      ENABLE_INTERRUPTS();
    }
    
    if (busyReceiving == FALSE && inputBufFill>0) {
