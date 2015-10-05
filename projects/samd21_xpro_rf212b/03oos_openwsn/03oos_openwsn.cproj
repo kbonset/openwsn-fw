@@ -5,7 +5,7 @@
     <ProjectVersion>7.0</ProjectVersion>
     <ToolchainName>com.Atmel.ARMGCC.C</ToolchainName>
     <ProjectGuid>{fbcfd0eb-de67-49d0-97ef-66a80f250358}</ProjectGuid>
-    <avrdevice>ATSAMR21G18A</avrdevice>
+    <avrdevice>ATSAMD21J18A</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <OutputType>Executable</OutputType>
     <Language>C</Language>
@@ -42,16 +42,19 @@
     <com_atmel_avrdbg_tool_edbg>
       <ToolOptions>
         <InterfaceProperties>
-          <SwdClock>12000000</SwdClock>
+          <SwdClock>2000000</SwdClock>
         </InterfaceProperties>
         <InterfaceName>SWD</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.edbg</ToolType>
-      <ToolNumber>ATML2127021800000126</ToolNumber>
+      <ToolNumber>ATML2130021800012217</ToolNumber>
       <ToolName>EDBG</ToolName>
     </com_atmel_avrdbg_tool_edbg>
     <preserveEEPROM>true</preserveEEPROM>
     <ExternalProgrammingToolCommand />
+    <avrtoolserialnumber>ATML2130021800012217</avrtoolserialnumber>
+    <avrdeviceexpectedsignature>0x10010000</avrdeviceexpectedsignature>
+    <avrtoolinterfaceclock>2000000</avrtoolinterfaceclock>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -101,7 +104,7 @@
       <Value>../../../../bsp/boards/samr21_xpro/drivers/inc</Value>
       <Value>../../../../bsp/boards/common</Value>
       <Value>../../../../openapps/uinject</Value>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.0.222\samd21a\include</Value>
       <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
@@ -122,11 +125,11 @@
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
   <armgcc.linker.memorysettings.ExternalRAM />
-  <armgcc.linker.miscellaneous.LinkerFlags>-Tsamr21g18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
+  <armgcc.linker.miscellaneous.LinkerFlags>-Tsamd21j18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.0.222\samd21a\include</Value>
       <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
@@ -146,7 +149,8 @@
     <ListValues>
       <Value>NDEBUG</Value>
       <Value>ARM_MATH_CM0=false</Value>
-      <Value>AT86RF233</Value>
+      <Value>AT86RF212B</Value>
+      <Value>BRIDGED_MODE</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
@@ -157,9 +161,9 @@
       <Value>../../../../bsp/boards</Value>
       <Value>../../../../bsp/chips</Value>
       <Value>../../../../kernel</Value>
-      <Value>../../../../bsp/boards/samr21_xpro</Value>
+      <Value>../../../../bsp/boards/samd21_xpro</Value>
       <Value>../../../../bsp/boards</Value>
-      <Value>../../../../bsp/chips/at86rf233</Value>
+      <Value>../../../../bsp/chips/at86rf212b</Value>
       <Value>../../../../drivers/common</Value>
       <Value>../../../../kernel/openos</Value>
       <Value>../../../../openstack/02a-MAClow</Value>
@@ -179,10 +183,10 @@
       <Value>../../../../openapps/rrt</Value>
       <Value>../../../../openstack/cross-layers</Value>
       <Value>../../../../openstack</Value>
-      <Value>../../../../bsp/boards/samr21_xpro/drivers/inc</Value>
+      <Value>../../../../bsp/boards/samd21_xpro/drivers/inc</Value>
       <Value>../../../../bsp/boards/common</Value>
       <Value>../../../../openapps/uinject</Value>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.0.222\samd21a\include</Value>
       <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
@@ -203,11 +207,11 @@
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
   <armgcc.linker.memorysettings.ExternalRAM />
-  <armgcc.linker.miscellaneous.LinkerFlags>-Tsamr21g18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
+  <armgcc.linker.miscellaneous.LinkerFlags>-Tsamd21j18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.0.222\samd21a\include</Value>
       <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
@@ -216,6 +220,134 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\board.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\board.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\bsp_timer.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\bsp_timer.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\debug_pins.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\debug_pins.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\base_type.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\base_type.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\cm0plus_interrupt.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\cm0plus_interrupt.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_extint.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_extint.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_flash.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_flash.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_gclk.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_gclk.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_gpio.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_gpio.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_radio.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_radio.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_spi.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_spi.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_sysctrl.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_sysctrl.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_timer.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_timer.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\inc\samd21_uart.h">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\inc\samd21_uart.h</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\cm0plus_interrupt.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\cm0plus_interrupt.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\cm0_handler.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\cm0_handler.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_extint.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_extint.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_flash.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_flash.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_gclk.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_gclk.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_gpio.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_gpio.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_spi.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_spi.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_sysctrl.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_sysctrl.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_timer.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_timer.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\drivers\src\samd21_uart.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\drivers\src\samd21_uart.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\eui64.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\eui64.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\flash.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\flash.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\gpio.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\gpio.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\leds.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\leds.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\radio_timer.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\radio_timer.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\spi_drv.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\spi_drv.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\boards\samd21_xpro\uart.c">
+      <SubType>compile</SubType>
+      <Link>bsp\boards\samd21_xpro\uart.c</Link>
+    </Compile>
+    <Compile Include="..\..\..\bsp\chips\at86rf212b\radio.c">
+      <SubType>compile</SubType>
+      <Link>chips\at86rf212b\radio.c</Link>
+    </Compile>
     <Compile Include="..\..\..\openapps\openapps.c">
       <SubType>compile</SubType>
       <Link>openapps\openapps.c</Link>
@@ -236,133 +368,9 @@
       <SubType>compile</SubType>
       <Link>bsp\boards\common\dummy_crypto_engine.c</Link>
     </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\base_type.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\base_type.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\cm0plus_interrupt.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\cm0plus_interrupt.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_extint.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_extint.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_flash.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_flash.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_gclk.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_gclk.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_gpio.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_gpio.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_radio.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_radio.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_spi.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_spi.h</Link>
-    </Compile>
     <Compile Include="..\..\common\03oos_openwsn\03oos_openwsn.c">
       <SubType>compile</SubType>
       <Link>03oos_openwsn.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_sysctrl.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_sysctrl.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_timer.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_timer.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\inc\samr21_uart.h">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\inc\samr21_uart.h</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\cm0plus_interrupt.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\cm0plus_interrupt.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\cm0_handler.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\cm0_handler.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_extint.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_extint.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_flash.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_flash.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_gclk.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_gclk.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_gpio.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_gpio.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_spi.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_spi.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_sysctrl.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_sysctrl.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_timer.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_timer.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\drivers\src\samr21_uart.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\drivers\src\samr21_uart.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\board.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\board.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\bsp_timer.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\bsp_timer.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\debug_pins.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\debug_pins.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\eui64.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\eui64.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\flash.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\flash.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\leds.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\leds.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\radio_timer.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\radio_timer.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\spi_drv.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\spi_drv.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\boards\samr21_xpro\uart.c">
-      <SubType>compile</SubType>
-      <Link>bsp\boards\samr21_xpro\uart.c</Link>
-    </Compile>
-    <Compile Include="..\..\..\bsp\chips\at86rf233\radio.c">
-      <SubType>compile</SubType>
-      <Link>chips\at86rf233\radio.c</Link>
     </Compile>
     <Compile Include="..\..\..\drivers\common\openhdlc.c">
       <SubType>compile</SubType>
@@ -508,23 +516,29 @@
       <SubType>compile</SubType>
       <Link>openapps\uinject\uinject.c</Link>
     </Compile>
-    <Compile Include="Device_Startup\startup_samr21.c">
+    <Compile Include="6TiSCH_Addon.c">
       <SubType>compile</SubType>
+      <Link>6TiSCH_Addon.c</Link>
     </Compile>
-    <Compile Include="Device_Startup\system_samr21.c">
+    <Compile Include="Device_Startup\startup_samd21.c">
       <SubType>compile</SubType>
+      <Link>Device_Startup\startup_samd21.c</Link>
+    </Compile>
+    <Compile Include="Device_Startup\system_samd21.c">
+      <SubType>compile</SubType>
+      <Link>Device_Startup\system_samd21.c</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bsp" />
     <Folder Include="bsp\boards" />
     <Folder Include="bsp\boards\common" />
-    <Folder Include="bsp\boards\samr21_xpro" />
+    <Folder Include="bsp\boards\samd21_xpro" />
+    <Folder Include="bsp\boards\samd21_xpro\drivers" />
+    <Folder Include="bsp\boards\samd21_xpro\drivers\inc" />
+    <Folder Include="bsp\boards\samd21_xpro\drivers\src" />
     <Folder Include="chips" />
-    <Folder Include="chips\at86rf233" />
-    <Folder Include="bsp\boards\samr21_xpro\drivers" />
-    <Folder Include="bsp\boards\samr21_xpro\drivers\inc" />
-    <Folder Include="bsp\boards\samr21_xpro\drivers\src" />
+    <Folder Include="chips\at86rf212b" />
     <Folder Include="Device_Startup\" />
     <Folder Include="drivers\" />
     <Folder Include="drivers\common\" />
@@ -550,11 +564,13 @@
     <Folder Include="openstack\cross-layers" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Device_Startup\samr21g18a_flash.ld">
+    <None Include="Device_Startup\samd21j18a_flash.ld">
       <SubType>compile</SubType>
+      <Link>Device_Startup\samd21j18a_flash.ld</Link>
     </None>
-    <None Include="Device_Startup\samr21g18a_sram.ld">
+    <None Include="Device_Startup\samd21j18a_sram.ld">
       <SubType>compile</SubType>
+      <Link>Device_Startup\samd21j18a_sram.ld</Link>
     </None>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />

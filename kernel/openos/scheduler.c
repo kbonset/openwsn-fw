@@ -53,7 +53,16 @@ void scheduler_start() {
          scheduler_dbg.numTasksCur--;
       }
       debugpins_task_clr();
-      board_sleep();
+
+#ifdef AT86RF212B
+#if defined MCU_SMART_SLEEP
+	mcu_smart_sleep();
+#else
+	board_sleep(BOARD_SLEEP_MODE0);
+#endif
+#else
+	board_sleep();
+#endif
       debugpins_task_set();                      // IAR should halt here if nothing to do
    }
 }

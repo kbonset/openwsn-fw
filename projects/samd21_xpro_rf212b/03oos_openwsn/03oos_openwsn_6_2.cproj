@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>7.0</ProjectVersion>
+    <ProjectVersion>6.2</ProjectVersion>
     <ToolchainName>com.Atmel.ARMGCC.C</ToolchainName>
     <ProjectGuid>{fbcfd0eb-de67-49d0-97ef-66a80f250358}</ProjectGuid>
     <avrdevice>ATSAMR21G18A</avrdevice>
@@ -51,7 +51,6 @@
       <ToolName>EDBG</ToolName>
     </com_atmel_avrdbg_tool_edbg>
     <preserveEEPROM>true</preserveEEPROM>
-    <ExternalProgrammingToolCommand />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -70,6 +69,10 @@
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
     <ListValues>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL\samr21\include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\CMSIS\Include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL</Value>
       <Value>../../../../inc</Value>
       <Value>../../../../openapps</Value>
       <Value>../../../../openstack</Value>
@@ -99,10 +102,6 @@
       <Value>../../../../openstack/cross-layers</Value>
       <Value>../../../../openstack</Value>
       <Value>../../../../bsp/boards/samr21_xpro/drivers/inc</Value>
-      <Value>../../../../bsp/boards/common</Value>
-      <Value>../../../../openapps/uinject</Value>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
-      <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -117,7 +116,7 @@
   </armgcc.linker.libraries.Libraries>
   <armgcc.linker.libraries.LibrarySearchPaths>
     <ListValues>
-      <Value>%24(ProjectDir)\Device_Startup</Value>
+      <Value>../cmsis/linkerScripts</Value>
     </ListValues>
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
@@ -126,8 +125,10 @@
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
-      <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL\samr21\include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\CMSIS\Include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -151,6 +152,10 @@
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
     <ListValues>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL\samr21\include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\CMSIS\Include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL</Value>
       <Value>../../../../inc</Value>
       <Value>../../../../openapps</Value>
       <Value>../../../../openstack</Value>
@@ -182,8 +187,6 @@
       <Value>../../../../bsp/boards/samr21_xpro/drivers/inc</Value>
       <Value>../../../../bsp/boards/common</Value>
       <Value>../../../../openapps/uinject</Value>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
-      <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize (-O1)</armgcc.compiler.optimization.level>
@@ -198,7 +201,7 @@
   </armgcc.linker.libraries.Libraries>
   <armgcc.linker.libraries.LibrarySearchPaths>
     <ListValues>
-      <Value>%24(ProjectDir)\Device_Startup</Value>
+      <Value>../cmsis/linkerScripts</Value>
     </ListValues>
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
@@ -207,8 +210,10 @@
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\atmel\SAMR21_DFP\1.0.28\include</Value>
-      <Value>%24(PackRepoDir)\arm\cmsis\4.2.0\CMSIS\Include\</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL\samr21\include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\CMSIS\Include</Value>
+      <Value>%24(ToolchainDir)\..\..\CMSIS_Atmel\Device\ATMEL</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -508,10 +513,10 @@
       <SubType>compile</SubType>
       <Link>openapps\uinject\uinject.c</Link>
     </Compile>
-    <Compile Include="Device_Startup\startup_samr21.c">
+    <Compile Include="cmsis\src\startup_samr21.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Device_Startup\system_samr21.c">
+    <Compile Include="cmsis\src\system_samr21.c">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
@@ -522,10 +527,12 @@
     <Folder Include="bsp\boards\samr21_xpro" />
     <Folder Include="chips" />
     <Folder Include="chips\at86rf233" />
+    <Folder Include="cmsis\" />
+    <Folder Include="cmsis\linkerScripts\" />
+    <Folder Include="cmsis\src\" />
     <Folder Include="bsp\boards\samr21_xpro\drivers" />
     <Folder Include="bsp\boards\samr21_xpro\drivers\inc" />
     <Folder Include="bsp\boards\samr21_xpro\drivers\src" />
-    <Folder Include="Device_Startup\" />
     <Folder Include="drivers\" />
     <Folder Include="drivers\common\" />
     <Folder Include="kernel" />
@@ -550,10 +557,10 @@
     <Folder Include="openstack\cross-layers" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Device_Startup\samr21g18a_flash.ld">
+    <None Include="cmsis\linkerScripts\samr21g18a_flash.ld">
       <SubType>compile</SubType>
     </None>
-    <None Include="Device_Startup\samr21g18a_sram.ld">
+    <None Include="cmsis\linkerScripts\samr21g18a_sram.ld">
       <SubType>compile</SubType>
     </None>
   </ItemGroup>
