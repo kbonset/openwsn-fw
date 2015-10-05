@@ -43,15 +43,13 @@
 #if defined DEBUG_LEVEL0
 #if defined (__SAMD21J18A__)
 
-#define DEBUG_PIN_FRAME  PIN_PA09
-#define DEBUG_PIN_SLOT   PIN_PB23
-#define DEBUG_PIN_FSM    PIN_PA13
-#define DEBUG_PIN_TASK   PIN_PA15
-#define DEBUG_PIN_ISR    PIN_PA27
-#define DEBUG_PIN_RADIO  PIN_PB10
+#define DEBUG_PIN_FRAME  PIN_PA09	// OK
+#define DEBUG_PIN_SLOT   PIN_PB23	// OK
+#define DEBUG_PIN_FSM    PIN_PA13	// OK
+#define DEBUG_PIN_TASK   PIN_PA15	// OK
+#define DEBUG_PIN_ISR    PIN_PA27	// OK
+#define DEBUG_PIN_RADIO  PIN_PB10	// OK
 
-//#define DBG_PIN1         PIN_PB02
-//#define DBG_PIN2         //PIN_PB23
 #else
 
 #define DEBUG_PIN_FRAME  PIN_PA06
@@ -80,14 +78,6 @@ void debugpins_init(void)
 	port_config(DEBUG_PIN_TASK, PORT_PIN_DIR_OUTPUT);
 	port_config(DEBUG_PIN_ISR, PORT_PIN_DIR_OUTPUT);
 	port_config(DEBUG_PIN_RADIO, PORT_PIN_DIR_OUTPUT);
-
-    /* Additional Debug pins used in SAMD21 */
-#if defined (__SAMD21J18A__)
-//    port_config(DBG_PIN1, PORT_PIN_DIR_OUTPUT);
-//	port_config(DBG_PIN2, PORT_PIN_DIR_OUTPUT);
-//	port_pin_set_level(DBG_PIN1, SET_LOW);
-//	port_pin_set_level(DBG_PIN2, SET_LOW);
-#endif
 
 	port_pin_set_level(DEBUG_PIN_FRAME, SET_LOW);
 	port_pin_set_level(DEBUG_PIN_SLOT, SET_LOW);
@@ -311,81 +301,6 @@ void debugpins_radio_set(void)
 {
  port_pin_set_level(DEBUG_PIN_RADIO, SET_HIGH);
 }
-
-
-#if defined (__SAMD21J18A__)
-/*
- * @brief dbg_pin1_set Set High to
- *        Debug Pin1. 
- *
- * @param None
- *
- */
-void dbg_pin1_set(void)
-{
-// port_pin_set_level(DBG_PIN1, SET_HIGH);
-}
-
-/*
- * @brief dbg_pin1_clr Set Low to
- *        Debug Pin1. 
- *
- * @param None
- *
- */
-void dbg_pin1_clr(void)
-{
-	//port_pin_set_level(DBG_PIN1, SET_LOW);
-}
-
-/*
- * @brief dbg_pin1_toggle Toggle the
- *        Debug Pin1. 
- *
- * @param None
- *
- */
-void dbg_pin1_toggle(void)
-{
-//	port_pin_toggle(DBG_PIN1);
-}
-
-/*
- * @brief dbg_pin2_set Set High to
- *        Debug Pin2. 
- *
- * @param None
- *
- */
-void dbg_pin2_set(void)
-{
-	//port_pin_set_level(DBG_PIN2, SET_HIGH);
-}
-
-/*
- * @brief dbg_pin2_clr Set Low to
- *        Debug Pin2. 
- *
- * @param None
- *
- */
-void dbg_pin2_clr(void)
-{
-	//port_pin_set_level(DBG_PIN2, SET_LOW);
-}
-
-/*
- * @brief dbg_pin2_toggle Toggle the
- *        Debug Pin2. 
- *
- * @param None
- *
- */
-void dbg_pin2_toggle(void)
-{
-	//port_pin_toggle(DBG_PIN2);
-}
-#endif /* __SAMD21J18A__ */
 
 #else 
 

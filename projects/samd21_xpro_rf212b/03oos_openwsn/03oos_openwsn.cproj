@@ -151,6 +151,7 @@
       <Value>ARM_MATH_CM0=false</Value>
       <Value>AT86RF212B</Value>
       <Value>BRIDGED_MODE</Value>
+      <Value>DEBUG_LEVEL0</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
