@@ -99,8 +99,8 @@ else:
 sources_h         += ['openapps.h']
 
 for a in apps:
-    sources_c     += [os.path.join(a,a+'.c')]
-    sources_h     += [os.path.join(a,a+'.h')]
+    sources_c     += Glob(os.path.join(a,'*.c'))
+    sources_h     += Glob(os.path.join(a,'*.h'))
 
 #===== build the openapps library
 
