@@ -170,6 +170,7 @@ enum {
    COMPONENT_UINJECT                   = 0x24,
    COMPONENT_RRT                       = 0x25,
    COMPONENT_SECURITY                  = 0x26,
+   COMPONENT_CNETHEAD                  = 0X30,
 };
 
 /**
