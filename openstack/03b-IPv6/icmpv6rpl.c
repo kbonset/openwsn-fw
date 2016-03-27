@@ -25,6 +25,8 @@ void sendDIO(void);
 void icmpv6rpl_timer_DAO_cb(opentimer_id_t id);
 void icmpv6rpl_timer_DAO_task(void);
 void sendDAO(void);
+// Admin
+uint8_t icmpv6rpl_getOpStatus(void);
 
 //=========================== public ==========================================
 
@@ -47,6 +49,8 @@ void icmpv6rpl_init() {
    
    icmpv6rpl_vars.busySending               = FALSE;
    icmpv6rpl_vars.fDodagidWritten           = 0;
+   icmpv6rpl_vars.opStatus                  = RPL_STATUS_INIT;
+   
    
    //=== DIO
    
@@ -231,6 +235,9 @@ void icmpv6rpl_receive(OpenQueueEntry_t* msg) {
             sizeof(myPrefix.prefix)
          );
          idmanager_setMyID(&myPrefix);
+
+         // Assume operationally OK if able to receive a DIO.
+         icmpv6rpl_vars.opStatus = RPL_STATUS_RUNOK;
          
          break;
       
@@ -588,4 +595,8 @@ void icmpv6rpl_setDAOPeriod(uint16_t daoPeriod){
        TIME_MS,
        daoPeriodRandom
    );
+}
+
+uint8_t icmpv6rpl_getOpStatus(void) {
+    return icmpv6rpl_vars.opStatus;
 }

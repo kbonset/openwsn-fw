@@ -17,12 +17,13 @@
 #include "IEEE802154E.h"
 #include "scheduler.h"
 #include "eui64.h"
+#include "icmpv6rpl.h"
 #include "cnethead.h"
 
 //=========================== defines =========================================
 
 // Delay before sending POST (in mseconds)
-#define INIT_DELAY     60000
+#define INIT_DELAY     30000
 
 const uint8_t hello_path0[]  = "nh";
 const uint8_t hello_path1[]  = "lo";
@@ -79,15 +80,20 @@ void hello_timer() {
 void hello_task() {    
    OpenQueueEntry_t* pkt;
    owerror_t         outcome;
+   uint8_t           dagroot[16];
 
    // don't run if not synch
-   if (ieee154e_isSynch() == FALSE) return;
+   if (ieee154e_isSynch() == FALSE)
+      return;
    
    // don't run on dagroot
    if (idmanager_getIsDAGroot()) {
       opentimers_stop(hello_vars.timerId);
       return;
    }
+
+   if (icmpv6rpl_getOpStatus() != RPL_STATUS_RUNOK)
+      return;
    
    // create a CoAP packet
    pkt = openqueue_getFreePacketBuffer(COMPONENT_CNETHEAD);
@@ -111,13 +117,16 @@ void hello_task() {
    memcpy(&pkt->payload[0],&hello_path0,sizeof(hello_path0)-1);
    packetfunctions_reserveHeaderSize(pkt,1);
    pkt->payload[0] = COAP_OPTION_NUM_URIPATH << 4 | (sizeof(hello_path0)-1);
+   
    // metadata
    pkt->l4_destination_port    = WKP_UDP_COAP;
+   // Send to DAGroot
+   icmpv6rpl_getRPLDODAGid(&dagroot[0]);
    pkt->l3_destinationAdd.type = ADDR_128B;
-   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&nethead_home_addr[0],16);
+   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&dagroot[0],16);
    // send
    outcome = opencoap_send(pkt,
-                           COAP_TYPE_NON,
+                           COAP_TYPE_CON,
                            COAP_CODE_REQ_POST,
                            2,
                            &hello_vars.desc);
