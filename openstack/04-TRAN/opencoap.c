@@ -17,6 +17,18 @@ opencoap_vars_t opencoap_vars;
 
 //=========================== prototype =======================================
 
+void _find_request_handler(
+      coap_header_iht*       coap_header,
+      coap_option_iht        coap_options[MAX_COAP_OPTIONS],
+      coap_resource_desc_t** handler);
+void _find_response_handler(
+      coap_header_iht*       coap_header,
+      coap_resource_desc_t** handler);
+uint8_t _parse_header(
+      OpenQueueEntry_t*      msg,
+      coap_header_iht*       coap_header,
+      coap_option_iht        coap_options[MAX_COAP_OPTIONS]);
+
 //=========================== public ==========================================
 
 //===== from stack
@@ -44,12 +56,9 @@ received packetbuffer is reused to contain the response (or error code).
 */
 void opencoap_receive(OpenQueueEntry_t* msg) {
    uint16_t                  temp_l4_destination_port;
-   uint8_t                   i;
    uint8_t                   index;
-   coap_option_t             last_option;
-   coap_resource_desc_t*     temp_desc;
-   bool                      found;
-   owerror_t                 outcome = 0;
+   coap_resource_desc_t*     resource;
+   owerror_t                 outcome = E_SUCCESS;
    // local variables passed to the handlers (with msg)
    coap_header_iht           coap_header;
    coap_option_iht           coap_options[MAX_COAP_OPTIONS];
@@ -57,206 +66,56 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    // take ownership over the received packet
    msg->owner                = COMPONENT_OPENCOAP;
    
-   //=== step 1. parse the packet
+   // parse the packet into the header and options structs
+   index = _parse_header(msg, &coap_header, coap_options);
+
+   if (index == 0) {
+      // unreadable
+      openqueue_freePacketBuffer(msg);
+      return;
+   } else {
+      // clear header and options so they can be redefined in the response
+      packetfunctions_tossHeader(msg,index);
+   }
    
-   // parse the CoAP header and remove from packet
-   index = 0;
-   coap_header.Ver           = (msg->payload[index] & 0xc0) >> 6;
-   coap_header.T             = (coap_type_t)((msg->payload[index] & 0x30) >> 4);
-   coap_header.TKL           = (msg->payload[index] & 0x0f);
-   index++;
-   coap_header.Code          = (coap_code_t)(msg->payload[index]);
-   index++;
-   coap_header.messageID     = msg->payload[index]*256+msg->payload[index+1];
-   index+=2;
-   
-   // reject unsupported header
-   if (coap_header.Ver!=COAP_VERSION || coap_header.TKL>COAP_MAX_TKL) {
-      openserial_printError(
-         COMPONENT_OPENCOAP,ERR_WRONG_TRAN_PROTOCOL,
-         (errorparameter_t)0,
-         (errorparameter_t)coap_header.Ver
-      );
+   // find the resource to handle the packet
+   if (  coap_header.Code>=COAP_CODE_REQ_GET    &&
+         coap_header.Code<=COAP_CODE_REQ_DELETE  ) {
+
+      // request; find by URI path
+      _find_request_handler(&coap_header, coap_options, &resource);
+         
+   } else {
+      // response; find by token / message ID
+      _find_response_handler(&coap_header, &resource);
+      
+      if (resource != NULL && resource->callbackRx != NULL)
+         resource->callbackRx(msg,&coap_header,&coap_options[0]);
+
+      // exit; no response to a response
       openqueue_freePacketBuffer(msg);
       return;
    }
    
-   // record the token
-   memcpy(&coap_header.token[0], &msg->payload[index], coap_header.TKL);
-   index += coap_header.TKL;
-   
-   // initialize the coap_options
-   for (i=0;i<MAX_COAP_OPTIONS;i++) {
-      coap_options[i].type = COAP_OPTION_NONE;
-   }
-   
-   // fill in the coap_options
-   last_option = COAP_OPTION_NONE;
-   for (i=0;i<MAX_COAP_OPTIONS;i++) {
-      
-      // detect when done parsing options
-      if (msg->payload[index]==COAP_PAYLOAD_MARKER) {
-         // found the payload marker, done parsing options.
-         index++; // skip marker and stop parsing options
-         break;
-      }
-      if (msg->length<=index) {
-         // end of message, no payload
-         break;
-      }
-      
-      // parse this option
-      coap_options[i].type        = (coap_option_t)((uint8_t)last_option+(uint8_t)((msg->payload[index] & 0xf0) >> 4));
-      last_option                 = coap_options[i].type;
-      coap_options[i].length      = (msg->payload[index] & 0x0f);
-      index++;
-      coap_options[i].pValue      = &(msg->payload[index]);
-      index                      += coap_options[i].length; //includes length as well
-   }
-   
-   // remove the CoAP header+options
-   packetfunctions_tossHeader(msg,index);
-   
-   //=== step 2. find the resource to handle the packet
-   
-   // find the resource this applies to
-   found = FALSE;
-   
-   if (
-         coap_header.Code>=COAP_CODE_REQ_GET &&
-         coap_header.Code<=COAP_CODE_REQ_DELETE
-      ) {
-      // this is a request: target resource is indicated as COAP_OPTION_LOCATIONPATH option(s)
-      // find the resource which matches
-      
-      // start with the first resource in the linked list
-      temp_desc = opencoap_vars.resources;
-      
-      // iterate until matching resource found, or no match
-      while (found==FALSE) {
-         if (
-               coap_options[0].type==COAP_OPTION_NUM_URIPATH    &&
-               coap_options[1].type==COAP_OPTION_NUM_URIPATH    &&
-               temp_desc->path0len>0                            &&
-               temp_desc->path0val!=NULL                        &&
-               temp_desc->path1len>0                            &&
-               temp_desc->path1val!=NULL
-            ) {
-            // resource has a path of form path0/path1
-               
-            if (
-                  coap_options[0].length==temp_desc->path0len                               &&
-                  memcmp(coap_options[0].pValue,temp_desc->path0val,temp_desc->path0len)==0 &&
-                  coap_options[1].length==temp_desc->path1len                               &&
-                  memcmp(coap_options[1].pValue,temp_desc->path1val,temp_desc->path1len)==0
-               ) {
-               found = TRUE;
-            };
-         
-         } else if (
-               coap_options[0].type==COAP_OPTION_NUM_URIPATH    &&
-               temp_desc->path0len>0                            &&
-               temp_desc->path0val!=NULL
-            ) {
-            // resource has a path of form path0
-               
-            if (
-                  coap_options[0].length==temp_desc->path0len                               &&
-                  memcmp(coap_options[0].pValue,temp_desc->path0val,temp_desc->path0len)==0
-               ) {
-               found = TRUE;
-            };
-         };
-         
-         // iterate to next resource, if not found
-         if (found==FALSE) {
-            if (temp_desc->next!=NULL) {
-               temp_desc = temp_desc->next;
-            } else {
-               break;
-            }
-         }
-      }
-   
+   // build and send response
+   if (resource != NULL) {
+      // let the resource handler build the response
+      outcome = resource->callbackRx(msg,&coap_header,&coap_options[0]);
+      if (outcome==E_FAIL)
+         coap_header.Code                 = COAP_CODE_RESP_METHODNOTALLOWED;
+      msg->creator                     = resource->componentID;
    } else {
-      // this is a response: target resource is indicated by token, and message ID
-      // if an ack for a confirmable message, or a reset
-      // find the resource which matches
-      
-      // start with the first resource in the linked list
-      temp_desc = opencoap_vars.resources;
-      
-      // iterate until matching resource found, or no match
-      while (found==FALSE) {
-         
-         if (
-                coap_header.TKL==temp_desc->last_request.TKL                                       &&
-                memcmp(&coap_header.token[0],&temp_desc->last_request.token[0],coap_header.TKL)==0
-            ) {
-                
-            if (coap_header.T==COAP_TYPE_ACK || coap_header.T==COAP_TYPE_RES) {
-                if (coap_header.messageID==temp_desc->last_request.messageID) {
-                    found=TRUE;
-                }
-            } else {
-                found=TRUE;
-            }
-            
-            // call the resource's callback
-            if (found==TRUE && temp_desc->callbackRx!=NULL) {
-               temp_desc->callbackRx(msg,&coap_header,&coap_options[0]);
-            }
-         }
-         
-         // iterate to next resource, if not found
-         if (found==FALSE) {
-            if (temp_desc->next!=NULL) {
-               temp_desc = temp_desc->next;
-            } else {
-               break;
-            }
-         }
-      };
-      
-      // free the received packet
-      openqueue_freePacketBuffer(msg);
-      
-      // stop here: will will not respond to a response
-      return;
-   }
-   
-   //=== step 3. ask the resource to prepare response
-   
-   if (found==TRUE) {
-      
-      // call the resource's callback
-      outcome = temp_desc->callbackRx(msg,&coap_header,&coap_options[0]);
-   } else {
-      // reset packet payload (DO NOT DELETE, we will reuse same buffer for response)
-      msg->payload                     = &(msg->packet[127]);
-      msg->length                      = 0;
-      // set the CoAP header
-      coap_header.TKL                  = 0;
       coap_header.Code                 = COAP_CODE_RESP_NOTFOUND;
-   }
-   
-   if (outcome==E_FAIL) {
-      // reset packet payload (DO NOT DELETE, we will reuse same buffer for response)
-      msg->payload                     = &(msg->packet[127]);
-      msg->length                      = 0;
-      // set the CoAP header
-      coap_header.TKL                  = 0;
-      coap_header.Code                 = COAP_CODE_RESP_METHODNOTALLOWED;
-   }
-   
-   //=== step 4. send that packet back
-   
-   // fill in packet metadata
-   if (found==TRUE) {
-      msg->creator                     = temp_desc->componentID;
-   } else {
       msg->creator                     = COMPONENT_OPENCOAP;
    }
+
+   if (outcome==E_FAIL) {
+      msg->payload                     = &(msg->packet[127]);
+      msg->length                      = 0;
+      coap_header.TKL                  = 0;
+   }
+   
+   // fill in packet metadata
    msg->l4_protocol                    = IANA_UDP;
    temp_l4_destination_port            = msg->l4_destination_port;
    msg->l4_destination_port            = msg->l4_sourcePortORicmpv6Type;
@@ -483,3 +342,174 @@ owerror_t opencoap_send(
 }
 
 //=========================== private =========================================
+
+/**
+\brief Read CoAP header and parse into CoAP-specific structs.
+
+\param[in] msg Message to read
+\param[out] header Header struct to populate
+\param[out] options Options array to populate
+
+\return Count of bytes read, or 0 on failure
+*/
+uint8_t _parse_header(
+      OpenQueueEntry_t* msg,
+      coap_header_iht*  coap_header,
+      coap_option_iht   coap_options[MAX_COAP_OPTIONS]) {
+   uint8_t                   i;
+   uint8_t                   index;
+   coap_option_t             last_option;
+   
+   // parse the CoAP header and remove from packet
+   index = 0;
+   coap_header->Ver          = (msg->payload[index] & 0xc0) >> 6;
+   coap_header->T            = (coap_type_t)((msg->payload[index] & 0x30) >> 4);
+   coap_header->TKL          = (msg->payload[index] & 0x0f);
+   index++;
+   coap_header->Code         = (coap_code_t)(msg->payload[index]);
+   index++;
+   coap_header->messageID    = msg->payload[index]*256+msg->payload[index+1];
+   index+=2;
+   
+   // reject unsupported header
+   if (coap_header->Ver!=COAP_VERSION || coap_header->TKL>COAP_MAX_TKL) {
+      openserial_printError(
+         COMPONENT_OPENCOAP,ERR_WRONG_TRAN_PROTOCOL,
+         (errorparameter_t)0,
+         (errorparameter_t)coap_header->Ver
+      );
+      return 0;
+   }
+   
+   // record the token
+   memcpy(&coap_header->token[0], &msg->payload[index], coap_header->TKL);
+   index += coap_header->TKL;
+   
+   // initialize the coap_options
+   for (i=0;i<MAX_COAP_OPTIONS;i++) {
+      coap_options[i].type = COAP_OPTION_NONE;
+   }
+   
+   // fill in the coap_options
+   last_option = COAP_OPTION_NONE;
+   for (i=0;i<MAX_COAP_OPTIONS;i++) {
+      
+      // detect when done parsing options
+      if (msg->payload[index]==COAP_PAYLOAD_MARKER) {
+         // found the payload marker, done parsing options.
+         index++; // skip marker and stop parsing options
+         break;
+      }
+      if (msg->length<=index) {
+         // end of message, no payload
+         break;
+      }
+      
+      // parse this option
+      coap_options[i].type        = (coap_option_t)((uint8_t)last_option+(uint8_t)((msg->payload[index] & 0xf0) >> 4));
+      last_option                 = coap_options[i].type;
+      coap_options[i].length      = (msg->payload[index] & 0x0f);
+      index++;
+      coap_options[i].pValue      = &(msg->payload[index]);
+      index                      += coap_options[i].length; //includes length as well
+   }
+
+   return index;
+}
+
+/**
+\brief Find the handler (resource) for the provided request message.
+
+\param[in] header    Parsed message header
+\param[in] options   Parsed message options
+\param[out] handler  Handler resource on success, otherwise NULL
+*/
+void _find_request_handler(
+      coap_header_iht*       coap_header,
+      coap_option_iht        coap_options[MAX_COAP_OPTIONS],
+      coap_resource_desc_t** handler) {
+
+   bool                      found    = FALSE;
+   coap_resource_desc_t*     resource = opencoap_vars.resources;
+      
+   // iterate until matching resource found, or no match
+   while (!found) {
+      if (
+            coap_options[0].type==COAP_OPTION_NUM_URIPATH    &&
+            coap_options[1].type==COAP_OPTION_NUM_URIPATH    &&
+            resource->path0len>0                             &&
+            resource->path0val!=NULL                         &&
+            resource->path1len>0                             &&
+            resource->path1val!=NULL
+         ) {
+         // resource has a path of form path0/path1
+            
+         if (
+               coap_options[0].length==resource->path0len                              &&
+               memcmp(coap_options[0].pValue,resource->path0val,resource->path0len)==0 &&
+               coap_options[1].length==resource->path1len                              &&
+               memcmp(coap_options[1].pValue,resource->path1val,resource->path1len)==0
+            ) {
+            found = TRUE;
+         };
+      
+      } else if (
+            coap_options[0].type==COAP_OPTION_NUM_URIPATH   &&
+            resource->path0len>0                            &&
+            resource->path0val!=NULL
+         ) {
+         // resource has a path of form path0
+            
+         if (
+               coap_options[0].length==resource->path0len                              &&
+               memcmp(coap_options[0].pValue,resource->path0val,resource->path0len)==0
+            ) {
+            found = TRUE;
+         }
+      }
+      
+      if (!found) {
+         resource = resource->next;
+      }
+   }
+
+   *handler = resource;
+}
+
+
+/**
+\brief Find the handler (resource) for the provided response message.
+
+\param[in] header    Parsed message header
+\param[out] handler  Handler resource on success, otherwise NULL
+*/
+void _find_response_handler(
+      coap_header_iht*       coap_header,
+      coap_resource_desc_t** handler) {
+
+   bool                      found    = FALSE;
+   coap_resource_desc_t*     resource = opencoap_vars.resources;
+      
+   // iterate until matching resource found, or no match
+   while (!found) {
+      if (
+             coap_header->TKL==resource->last_request.TKL                                       &&
+             memcmp(&coap_header->token[0],&resource->last_request.token[0],coap_header->TKL)==0
+         ) {
+             
+         if (coap_header->T==COAP_TYPE_ACK || coap_header->T==COAP_TYPE_RES) {
+             if (coap_header->messageID==resource->last_request.messageID) {
+                 found=TRUE;
+             }
+         } else {
+             found=TRUE;
+         }
+      }
+      
+      if (!found) {
+         resource = resource->next;
+      }
+   }
+
+   *handler = resource;
+}
