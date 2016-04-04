@@ -37,6 +37,17 @@ static const uint8_t ipAddr_ringmaster[] = {0xbb, 0xbb, 0x00, 0x00, 0x00, 0x00, 
 
 #define COAP_VERSION                   1
 
+/** \brief Max transmissions for a confirmable message, including the original send */ 
+#define COAP_CON_TX_MAX                3
+
+/**
+\brief Timeout for initial confirmable ACK, in binary seconds
+
+"Binary" means the value will be multipled by 1.024 to determine the actual timeout.
+This approach simplifies the math when handling a message.
+*/ 
+#define COAP_ACK_TIMEOUT               2
+
 typedef enum {
    COAP_TYPE_CON                       = 0,
    COAP_TYPE_NON                       = 1,
@@ -121,11 +132,27 @@ typedef struct {
    uint8_t*      pValue;
 } coap_option_iht;
 
+/** \brief Tracks confirmable messages sent */ 
+typedef struct coap_confirmable_t {
+   OpenQueueEntry_t*     msg;            /**< message being sent, reuse with each resend;
+                                              a non-NULL value means record is valid */
+   opentimer_id_t        timerId;        /**< timer while CON message outstanding;
+                                              UINT_MAX otherwise */
+   uint16_t              timeout;        /**< length of the first timeout, in millis;
+                                              subsequent timeouts recalculated so this
+                                              attribute can be expressed in two bytes */
+   uint8_t               txCount;        /**< running count of message transmissions;
+                                              includes initial tx plus retransmits */
+} coap_confirmable_t;
+
 typedef owerror_t (*callbackRx_cbt)(OpenQueueEntry_t* msg,
                                 coap_header_iht*  coap_header,
                                 coap_option_iht*  coap_options);
 typedef void (*callbackSendDone_cbt)(OpenQueueEntry_t* msg,
                                       owerror_t error);
+typedef void (*callbackConFail_cbt)(OpenQueueEntry_t* msg);
+
+typedef void (*callbackConRetry_cbt)(void);
 
 typedef struct coap_resource_desc_t coap_resource_desc_t;
 
@@ -137,8 +164,13 @@ struct coap_resource_desc_t {
    uint8_t               componentID;
    bool                  discoverable;
    callbackRx_cbt        callbackRx;
-   callbackSendDone_cbt  callbackSendDone;
+   callbackSendDone_cbt  callbackSendDone;   /**< handler must free message buffer
+                                                  for non-confirmable messages */
    coap_header_iht       last_request;
+   coap_confirmable_t    confirmable;        /**> state for a confirmable request */
+   callbackConRetry_cbt  callbackConRetry;   /**< retries sending a confirmable request*/
+   callbackConFail_cbt   callbackConFail;    /**< confirmable message retries exhausted;
+                                                  handler must free message buffer */
    coap_resource_desc_t* next;
 };
 
@@ -168,6 +200,7 @@ owerror_t     opencoap_send(
     uint8_t               numOptions,
     coap_resource_desc_t* descSender
 );
+owerror_t     opencoap_resend(coap_confirmable_t* confirmer);
 
 /**
 \}
