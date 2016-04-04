@@ -248,6 +248,8 @@ enum {
    ERR_SIXTOP_RETURNCODE               = 0x3c, // sixtop return code {0} at sixtop state {1}
    ERR_SIXTOP_COUNT                    = 0x3d, // there are {0} cells to request mote
    ERR_SIXTOP_LIST                     = 0x3e, // the cells reserved to request mote contains slot {0} and slot {1}
+
+   ERR_CONFIRMABLES_FULL               = 0xa0, // no more space in CoAP confirmables array
 };
 
 //=========================== typedef =========================================
