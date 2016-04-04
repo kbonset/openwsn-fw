@@ -17,6 +17,8 @@ opencoap_vars_t opencoap_vars;
 
 //=========================== prototype =======================================
 
+void opencoap_ackTimeout(opentimer_id_t id);
+
 //=========================== public ==========================================
 
 //===== from stack
@@ -50,6 +52,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    coap_resource_desc_t*     temp_desc;
    bool                      found;
    owerror_t                 outcome = 0;
+   coap_confirmable_t*       confirmer;
    // local variables passed to the handlers (with msg)
    coap_header_iht           coap_header;
    coap_option_iht           coap_options[MAX_COAP_OPTIONS];
@@ -217,6 +220,17 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
             }
          }
       };
+
+      // Clean up confirmable tracking
+      if (found==TRUE && (coap_header.T==COAP_TYPE_ACK || coap_header.T==COAP_TYPE_RES)) {
+         confirmer=&temp_desc->confirmable;
+         if (confirmer->timerId!=UINT8_MAX) {
+            // intercept timer before timeout
+            opentimers_stop(confirmer->timerId);
+         }
+         openqueue_freePacketBuffer(confirmer->msg);
+         confirmer->msg = NULL;
+      }
       
       // free the received packet
       openqueue_freePacketBuffer(msg);
@@ -282,13 +296,19 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
 }
 
 /**
-\brief Indicates that the CoAP response has been sent.
+\brief Indicates that a CoAP message has been sent.
+
+For a confirmable message, starts a timer for a response.
 
 \param[in] msg A pointer to the message which was sent.
 \param[in] error The outcome of the send function.
 */
 void opencoap_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
-   coap_resource_desc_t* temp_resource;
+   coap_resource_desc_t* msg_resource;
+   uint8_t i;
+   coap_confirmable_t* confirmer;
+   uint16_t margin;
+   uint32_t timeout;
    
    // take ownership over that packet
    msg->owner = COMPONENT_OPENCOAP;
@@ -300,26 +320,98 @@ void opencoap_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
       return;
    }
    //=== someone else's
-   temp_resource = opencoap_vars.resources;
-   while (temp_resource!=NULL) {
-      if (
-         temp_resource->componentID==msg->creator &&
-         temp_resource->callbackSendDone!=NULL
-         ) {
-         temp_resource->callbackSendDone(msg,error);
-         return;
+   msg_resource = opencoap_vars.resources;
+   while (msg_resource!=NULL) {
+      if ( msg_resource->componentID==msg->creator &&
+           msg_resource->callbackSendDone!=NULL    ) {
+              
+         msg_resource->callbackSendDone(msg,error);
+         break;
       }
-      temp_resource = temp_resource->next;
+      msg_resource = msg_resource->next;
    }
-   
-   // if you get here, no valid creator was found
-   
-   openserial_printError(
-      COMPONENT_OPENCOAP,ERR_UNEXPECTED_SENDDONE,
-      (errorparameter_t)0,
-      (errorparameter_t)0
-   );
-   openqueue_freePacketBuffer(msg);
+
+   if (msg_resource==NULL) {
+      // no valid creator was found
+      openserial_printError(
+         COMPONENT_OPENCOAP,ERR_UNEXPECTED_SENDDONE,
+         (errorparameter_t)0,
+         (errorparameter_t)0
+      );
+      openqueue_freePacketBuffer(msg);
+      return;
+   }
+
+   // if confirmable, start timer for response
+   if (msg_resource->confirmable.msg==msg) {
+      confirmer = &msg_resource->confirmable;
+      if (confirmer->txCount<COAP_CON_TX_MAX) {
+         if (confirmer->txCount==0) {
+            // duration is a randomized value, 1 to 1.5 times the timeout value, in msec
+            // i.e., using RFC 7252 ACK_RANDOM_FACTOR of 1.5
+            margin             = openrandom_get16b() & 0xff;
+            confirmer->timeout = ((uint32_t)COAP_ACK_TIMEOUT)*1024
+                                 + ((uint32_t)COAP_ACK_TIMEOUT)*2*margin;
+            timeout            = confirmer->timeout;
+         } else {
+            timeout            = confirmer->timeout;
+            for (i=0; i<confirmer->txCount; i++) {
+               timeout *= 2;
+            }
+         }
+         
+         confirmer->txCount++;
+         confirmer->timerId = opentimers_start(timeout,
+                                               TIMER_ONESHOT, TIME_MS,
+                                               opencoap_ackTimeout);
+      } else {
+         // retries exhausted -- handled in opencoap_ackTimeout()
+         // should never happen
+      }
+   }
+}
+
+/**
+\brief Timer callback; resends confirmable message, or executes app callback when
+       retries exhausted
+
+Executed in interrupt mode
+
+\param[in] id Timer that generated this callback
+*/
+void opencoap_ackTimeout(opentimer_id_t id) {
+   coap_confirmable_t* confirmer = NULL;
+   coap_resource_desc_t* resource;
+
+   // find confirmable for timer
+   resource = opencoap_vars.resources;
+   for (; resource!=NULL; resource = resource->next ) {
+      if ( resource->confirmable.msg!=NULL   &&
+           resource->confirmable.timerId==id ) {
+         confirmer = &resource->confirmable;
+         break;
+      }
+   }
+
+   if (confirmer!=NULL) {
+      if (confirmer->txCount==COAP_CON_TX_MAX || resource->callbackConRetry==NULL) {
+         // retries exhausted or no retry callback
+         if (resource->callbackConFail!=NULL) {
+            resource->callbackConFail(confirmer->msg);
+         } else {
+            openqueue_freePacketBuffer(confirmer->msg);
+         }
+         confirmer->msg = NULL;
+         
+      } else {
+         confirmer->timerId = UINT8_MAX;
+
+         // defer resend to app since currently in interrupt mode
+         scheduler_push_task(resource->callbackConRetry,TASKPRIO_COAP);
+      }
+   } else {
+      // no confirmer -- might happen if ACK just received; nothing to do here
+   }
 }
 
 //===== from CoAP resources
@@ -443,7 +535,7 @@ owerror_t opencoap_send(
    uint16_t token;
    uint8_t tokenPos=0;
    coap_header_iht* request;
-   
+
    // increment the (global) messageID
    if (opencoap_vars.messageID++ == 0xffff) {
       opencoap_vars.messageID = 0;
@@ -478,8 +570,39 @@ owerror_t opencoap_send(
    msg->payload[3]                  = (request->messageID>>0) & 0xff;
 
    memcpy(&msg->payload[4],&token,request->TKL);
+
+   // setup tracking for a confirmable request
+   if (type==COAP_TYPE_CON) {
+      descSender->confirmable.msg     = msg;
+      descSender->confirmable.timerId = UINT8_MAX;
+      descSender->confirmable.timeout = 0;
+      descSender->confirmable.txCount = 0;
+   }
    
    return openudp_send(msg);
+}
+
+/**
+\brief Resends a confirmable message after the previous send timed out
+
+\param[in] confirmer Confirmable message handler for a resource
+
+\return Outcome of sending the packet, or success if no active message for the
+        confirmable
+*/
+owerror_t opencoap_resend(coap_confirmable_t* confirmer) {
+   if (confirmer->msg!=NULL) {
+      // take ownership over the packet
+      confirmer->msg->owner            = COMPONENT_OPENCOAP;
+      // Reset payload position for UDP
+      confirmer->msg->payload          = confirmer->msg->l4_payload;
+      confirmer->msg->length           = confirmer->msg->l4_length;
+
+      return openudp_send(confirmer->msg);
+   } else {
+      // message may have been acked since the timeout expired
+      return E_SUCCESS;
+   }
 }
 
 //=========================== private =========================================
