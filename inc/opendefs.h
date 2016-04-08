@@ -250,7 +250,7 @@ enum {
    ERR_SIXTOP_COUNT                    = 0x3d, // there are {0} cells to request mote
    ERR_SIXTOP_LIST                     = 0x3e, // the cells reserved to request mote contains slot {0} and slot {1}
 
-   ERR_CONFIRMABLES_FULL               = 0xa0, // no more space in CoAP confirmables array
+   ERR_DEBUG                           = 0xf0,  // debug p0: {0}; p1: {1}
 };
 
 //=========================== typedef =========================================
