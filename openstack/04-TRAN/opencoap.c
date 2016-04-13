@@ -577,6 +577,8 @@ owerror_t opencoap_send(
       descSender->confirmable.timerId = UINT8_MAX;
       descSender->confirmable.timeout = 0;
       descSender->confirmable.txCount = 0;
+   } else {
+      descSender->confirmable.msg     = NULL;
    }
    
    return openudp_send(msg);
