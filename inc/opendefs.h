@@ -202,6 +202,7 @@ enum {
    ERR_HOP_LIMIT_REACHED               = 0x11, // packet discarded hop limit reached
    ERR_LOOP_DETECTED                   = 0x12, // loop detected due to previous rank {0} lower than current node rank {1}
    ERR_WRONG_DIRECTION                 = 0x13, // upstream packet set to be downstream, possible loop.
+   ERR_PREFIXES_DIFFER                 = 0x50, // expected prefixes to be the same
    // l2b
    ERR_NEIGHBORS_FULL                  = 0x14, // neighbors table is full (max number of neighbor is {0})
    ERR_NO_SENT_PACKET                  = 0x15, // there is no sent packet in queue

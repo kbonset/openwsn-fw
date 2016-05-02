@@ -50,14 +50,14 @@ void forwarding_init() {
 }
 
 /**
-\brief Send a packet originating at this mote.
+\brief Send a packet originating at this mote up to the DAG root.
 
 This function is called by an upper layer, and only concerns packets originated
 at this mote.
 
 \param[in,out] msg Packet to send.
 */
-owerror_t forwarding_send(OpenQueueEntry_t* msg) {
+owerror_t forwarding_send_up(OpenQueueEntry_t* msg) {
     ipv6_header_iht      ipv6_outer_header;
     ipv6_header_iht      ipv6_inner_header;
     rpl_option_ht        rpl_option;
@@ -140,11 +140,11 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
     //IPHC inner header and NHC IPv6 header will be added at here
     iphc_prependIPv6Header(msg,
                 IPHC_TF_ELIDED,
-                flow_label, // value_flowlabel
+                flow_label,                   // value_flowlabel
                 IPHC_NH_INLINE,
                 msg->l4_protocol, 
                 IPHC_HLIM_64,
-                ipv6_outer_header.hop_limit,
+                ipv6_outer_header.hop_limit,  // irrelevant since IPHC_HLIM_64
                 IPHC_CID_NO,
                 IPHC_SAC_STATELESS,
                 sam,
@@ -166,6 +166,143 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
         &flow_label,
         PCKTSEND
     );
+}
+
+
+/**
+\brief Send a packet originating at the DAG root down into the mesh.
+
+This function is called by an upper layer, and only concerns packets originated
+at this mote.
+
+\param[in,out] msg Packet to send.
+*/
+owerror_t forwarding_send_down(OpenQueueEntry_t* msg) {
+    ipv6_header_iht      ipv6_outer_header;
+    ipv6_header_iht      ipv6_inner_header;
+    rpl_option_ht        rpl_option;
+    open_addr_t*         myprefix;
+    open_addr_t*         myadd64;
+    uint32_t             flow_label = 0;
+
+    open_addr_t          temp_dest_prefix;
+    open_addr_t          temp_dest_mac64b;
+    open_addr_t*         p_dest;
+    open_addr_t*         p_src;  
+    open_addr_t          temp_src_prefix;
+    open_addr_t          temp_src_mac64b; 
+    uint8_t              sam;
+    uint8_t              m;
+    uint8_t              dam;
+
+    // take ownership over the packet
+    msg->owner                = COMPONENT_FORWARDING;
+
+    m   = IPHC_M_NO;
+
+    // retrieve my prefix and EUI64
+    myprefix                  = idmanager_getMyID(ADDR_PREFIX);
+    myadd64                   = idmanager_getMyID(ADDR_64B);
+
+    // set source address (me)
+    msg->l3_sourceAdd.type=ADDR_128B;
+    memcpy(&(msg->l3_sourceAdd.addr_128b[0]),myprefix->prefix,8);
+    memcpy(&(msg->l3_sourceAdd.addr_128b[8]),myadd64->addr_64b,8);
+
+    // initialize IPv6 header
+    memset(&ipv6_outer_header,0,sizeof(ipv6_header_iht));
+    memset(&ipv6_inner_header,0,sizeof(ipv6_header_iht));
+
+    // Set hop limit to the default in-network value as this packet is being
+    // sent from upper layer. This is done here as send_internal() is used by
+    // forwarding of packets as well which carry a hlim. This value is required
+    // to be set to a value as the following function can decrement it.
+    ipv6_inner_header.hop_limit     = IPHC_DEFAULT_HOP_LIMIT;
+
+    // create the RPL hop-by-hop option
+
+    forwarding_createRplOption(
+      &rpl_option,      // rpl_option to fill in
+      0x00              // flags
+    );
+    // Tricks iphc_sendFromForwarding() into not writing hop-by-hop header, which
+    // is not appropriate for a downward route.
+    rpl_option.optionType = 0;
+    
+    packetfunctions_ip128bToMac64b(&(msg->l3_destinationAdd),&temp_dest_prefix,&temp_dest_mac64b);
+    //xv poipoi -- get the src prefix as well
+    packetfunctions_ip128bToMac64b(&(msg->l3_sourceAdd),&temp_src_prefix,&temp_src_mac64b);
+    //XV -poipoi we want to check if the source address prefix is the same as destination prefix
+    if (packetfunctions_sameAddress(&temp_dest_prefix,&temp_src_prefix)) {
+         // same prefix use 64B address
+         sam = IPHC_SAM_64B;
+         dam = IPHC_DAM_64B;
+         p_dest = &temp_dest_mac64b;      
+         p_src  = &temp_src_mac64b; 
+    } else {
+        // Expecting same prefix since originating at DAG root
+        openserial_printError(
+            COMPONENT_FORWARDING,ERR_PREFIXES_DIFFER,
+            (errorparameter_t)0,
+            (errorparameter_t)0
+        );
+        
+        // free packet
+        openqueue_freePacketBuffer(msg);
+        return E_FAIL;
+    }
+    //IPHC inner header and NHC IPv6 header will be added at here
+    iphc_prependIPv6Header(msg,
+                IPHC_TF_ELIDED,
+                flow_label, // value_flowlabel
+                IPHC_NH_INLINE,
+                msg->l4_protocol, 
+                IPHC_HLIM_64,
+                ipv6_outer_header.hop_limit,
+                IPHC_CID_NO,
+                IPHC_SAC_STATELESS,
+                sam,
+                m,
+                IPHC_DAC_STATELESS,
+                dam,
+                p_dest,
+                p_src,            
+                PCKTSEND  
+                );
+    // both of them are compressed
+    ipv6_outer_header.next_header_compressed = TRUE;
+
+    // single hop only
+    return forwarding_send_internal_RoutingTable(
+        msg,
+        &ipv6_outer_header,
+        &ipv6_inner_header,
+        &rpl_option,
+        &flow_label,
+        PCKTSEND
+    );
+}
+
+/**
+\brief Send a packet originating at this mote.
+
+This function is called by an upper layer, and only concerns packets originated
+at this mote.
+
+\param[in,out] msg Packet to send.
+*/
+owerror_t forwarding_send(OpenQueueEntry_t* msg) {
+   if (idmanager_getIsDAGroot()==TRUE) {
+      // Allow sending application messages down the mesh.
+      if (msg->l4_protocol==IANA_UDP) {
+         return forwarding_send_down(msg);
+      } else if (msg->l4_protocol==IANA_ICMPv6) {
+         // Really this more like send *out*, rather than up, for RPL DIOs.
+         return forwarding_send_up(msg);
+      }
+   } else {
+      return forwarding_send_up(msg);
+   }
 }
 
 /**
@@ -762,4 +899,3 @@ void forwarding_createRplOption(rpl_option_ht* rpl_option, uint8_t flags) {
     
     rpl_option->flags = (flags & ~I_FLAG & ~K_FLAG) | (I<<1) | K;
 }
-

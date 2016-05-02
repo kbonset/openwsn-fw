@@ -70,8 +70,10 @@ owerror_t iphc_sendFromForwarding(
     msg->owner = COMPONENT_IPHC;
    
     // error checking
+    // Allow only routing messages and unicast UDP from DAG root.
     if (idmanager_getIsDAGroot()==TRUE &&
-        packetfunctions_isAllRoutersMulticast(&(msg->l3_destinationAdd))==FALSE) {
+        packetfunctions_isAllRoutersMulticast(&(msg->l3_destinationAdd))==FALSE &&
+        msg->l4_protocol!=IANA_UDP) {
         openserial_printCritical(COMPONENT_IPHC,ERR_BRIDGE_MISMATCH,
                             (errorparameter_t)0,
                             (errorparameter_t)0);
@@ -222,6 +224,8 @@ void iphc_receive(OpenQueueEntry_t* msg) {
     uint8_t              page_length;
     rpl_option_ht        rpl_option;
     uint8_t              rpi_length;
+    bool                 accept_dagroot_pkt = FALSE;
+    open_addr_t          dest_addr;
    
     msg->owner      = COMPONENT_IPHC;
    
@@ -231,11 +235,21 @@ void iphc_receive(OpenQueueEntry_t* msg) {
     
     // then regular header
     iphc_retrieveIPv6Header(msg,&ipv6_outer_header,&ipv6_inner_header,&page_length);
+
+    // Accept only UDP (application) messages for DAG root.
+    if (idmanager_getIsDAGroot()==TRUE && ipv6_inner_header.next_header==IANA_UDP) {
+
+        memcpy(&dest_addr,&ipv6_inner_header.dest, sizeof(open_addr_t));
+        if (idmanager_isMyAddress(&dest_addr)) {
+            accept_dagroot_pkt = TRUE;
+        }
+    }
     
     // if the address is broadcast address, the ipv6 header is the inner header
     if (
         idmanager_getIsDAGroot()==FALSE ||
-        packetfunctions_isBroadcastMulticast(&(ipv6_inner_header.dest))
+        packetfunctions_isBroadcastMulticast(&(ipv6_inner_header.dest)) ||
+        accept_dagroot_pkt==TRUE
     ) {
         packetfunctions_tossHeader(msg,page_length);
         if (
