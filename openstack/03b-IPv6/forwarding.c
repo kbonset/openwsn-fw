@@ -1,6 +1,7 @@
 #include "opendefs.h"
 #include "forwarding.h"
 #include "iphc.h"
+#include "dag.h"
 #include "openqueue.h"
 #include "openserial.h"
 #include "idmanager.h"
@@ -176,8 +177,9 @@ This function is called by an upper layer, and only concerns packets originated
 at this mote.
 
 \param[in,out] msg Packet to send.
+\param[in] srcRoute Path to destination, ordered from destination to 1st hop
 */
-owerror_t forwarding_send_down(OpenQueueEntry_t* msg) {
+owerror_t forwarding_send_down(OpenQueueEntry_t* msg, dag_route_t* srcRoute) {
     ipv6_header_iht      ipv6_outer_header;
     ipv6_header_iht      ipv6_inner_header;
     rpl_option_ht        rpl_option;
@@ -219,14 +221,13 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg) {
     // to be set to a value as the following function can decrement it.
     ipv6_inner_header.hop_limit     = IPHC_DEFAULT_HOP_LIMIT;
 
-    // create the RPL hop-by-hop option
-
+    // Create the RPL hop-by-hop option. Lower layers require it to be defined.
     forwarding_createRplOption(
       &rpl_option,      // rpl_option to fill in
       0x00              // flags
     );
-    // Tricks iphc_sendFromForwarding() into not writing hop-by-hop header, which
-    // is not appropriate for a downward route.
+    // However, we trick iphc_sendFromForwarding() into not writing the hop-by-hop
+    // header, which is not used for a downward route.
     rpl_option.optionType = 0;
     
     packetfunctions_ip128bToMac64b(&(msg->l3_destinationAdd),&temp_dest_prefix,&temp_dest_mac64b);
@@ -272,15 +273,17 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg) {
     // both of them are compressed
     ipv6_outer_header.next_header_compressed = TRUE;
 
-    // single hop only
-    return forwarding_send_internal_RoutingTable(
-        msg,
-        &ipv6_outer_header,
-        &ipv6_inner_header,
-        &rpl_option,
-        &flow_label,
-        PCKTSEND
-    );
+    if (srcRoute->hopCount > 1) {
+    } else {
+        return forwarding_send_internal_RoutingTable(
+            msg,
+            &ipv6_outer_header,
+            &ipv6_inner_header,
+            &rpl_option,
+            &flow_label,
+            PCKTSEND
+        );
+    }
 }
 
 /**
@@ -292,10 +295,17 @@ at this mote.
 \param[in,out] msg Packet to send.
 */
 owerror_t forwarding_send(OpenQueueEntry_t* msg) {
+   dag_route_t route;
+   owerror_t route_ok;
+    
    if (idmanager_getIsDAGroot()==TRUE) {
       // Allow sending application messages down the mesh.
       if (msg->l4_protocol==IANA_UDP) {
-         return forwarding_send_down(msg);
+         if (dag_buildRoute(&route, &msg->l3_destinationAdd) == E_SUCCESS) {
+            return forwarding_send_down(msg, &route);
+         } else {
+            return E_FAIL;
+         }
       } else if (msg->l4_protocol==IANA_ICMPv6) {
          // Really this more like send *out*, rather than up, for RPL DIOs.
          return forwarding_send_up(msg);
