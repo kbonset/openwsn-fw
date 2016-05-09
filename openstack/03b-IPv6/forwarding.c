@@ -36,6 +36,13 @@ owerror_t forwarding_send_internal_SourceRouting(
    ipv6_header_iht*     ipv6_inner_header,
    rpl_option_ht*       rpl_option
 );
+owerror_t forwarding_send_down_SourceRouting(
+   OpenQueueEntry_t*    msg,
+   ipv6_header_iht*     ipv6_outer_header,
+   ipv6_header_iht*     ipv6_inner_header,
+   rpl_option_ht*       rpl_option,
+   dag_route_t*         srcRoute
+);
 void      forwarding_createRplOption(
    rpl_option_ht*       rpl_option,
    uint8_t              flags
@@ -247,9 +254,6 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg, dag_route_t* srcRoute) {
             (errorparameter_t)0,
             (errorparameter_t)0
         );
-        
-        // free packet
-        openqueue_freePacketBuffer(msg);
         return E_FAIL;
     }
     //IPHC inner header and NHC IPv6 header will be added at here
@@ -274,6 +278,13 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg, dag_route_t* srcRoute) {
     ipv6_outer_header.next_header_compressed = TRUE;
 
     if (srcRoute->hopCount > 1) {
+        return forwarding_send_down_SourceRouting(
+            msg,
+            &ipv6_outer_header,
+            &ipv6_inner_header,
+            &rpl_option,
+            srcRoute
+        );
     } else {
         return forwarding_send_internal_RoutingTable(
             msg,
@@ -296,7 +307,6 @@ at this mote.
 */
 owerror_t forwarding_send(OpenQueueEntry_t* msg) {
    dag_route_t route;
-   owerror_t route_ok;
     
    if (idmanager_getIsDAGroot()==TRUE) {
       // Allow sending application messages down the mesh.
@@ -313,6 +323,7 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
    } else {
       return forwarding_send_up(msg);
    }
+   return E_FAIL;
 }
 
 /**
@@ -882,6 +893,124 @@ owerror_t forwarding_send_internal_SourceRouting(
     );
 }
 
+/**
+\brief Send a packet, using a source route to find the next hop.
+
+We assume the packet is sent by the DAG root. Processing is detailed in
+https://datatracker.ietf.org/doc/draft-ietf-roll-routing-dispatch/
+
+\param[in,out] msg                Packet to send
+\param[in]     ipv6_outer_header  Packet's IP-in-IP header for use by the PAN
+\param[in]     ipv6_inner_header  Packet's original IPv6 header; mostly empty
+\param[in]     rpl_option         RPL params
+\param[in]     srcRoute           Hops to destination
+*/
+owerror_t forwarding_send_down_SourceRouting(
+      OpenQueueEntry_t* msg,
+      ipv6_header_iht*  ipv6_outer_header,
+      ipv6_header_iht*  ipv6_inner_header,
+      rpl_option_ht*    rpl_option,
+      dag_route_t*      srcRoute
+   ) {
+   open_addr_t       compressRef;
+   open_addr_t       temp_prefix;
+   uint8_t           i;
+   uint8_t           matchlen;
+   uint8_t           matchType;     // type (length) of addresses in the header
+   uint8_t           addrIndex;     // start index to copy from the source hop
+   uint8_t           rh3Type;       // RH3 header match class currently active
+   uint8_t           rh3buf[40];    // stores SRH-6LoRH as it is built
+   uint8_t           typeSize;      // value for size field in RH3 header (one less than hop count)
+   uint8_t           typeStart;     // start position in rh3buf for the current RH3 type
+   uint8_t           typePos;       // position in rh3buf for the next byte to write
+   
+   // Initial compression reference is me (DAG root)
+   compressRef.type = ADDR_128B;
+   memcpy(&compressRef.addr_128b[0],&msg->l3_sourceAdd.addr_128b[0],16);
+
+   rh3Type    = 0xff;  // means type not defined yet
+   memset(&rh3buf[0],0,40);
+   typeSize   = 0;     
+   typeStart  = 0;     
+   typePos    = 0;     // position for next write for the active RH3 type
+
+   // Loop through source route, starting from next hop.
+   // Skip srcRoute[0]; it is the destination.
+   for (i=srcRoute->hopCount-1; i>0; i--) {
+
+      // Find length of address match between hop and compress reference
+      for (matchlen=0; matchlen<16; matchlen++) {
+         if (srcRoute->hop[i]->address.addr_128b[matchlen] != compressRef.addr_128b[matchlen]) {
+            break;
+         }
+      }
+      if (matchlen==16) {
+         // Means hop is the same as compress reference.
+         openserial_printError(
+            COMPONENT_FORWARDING,
+            ERR_INVALID_ROUTE,
+            (errorparameter_t)0,
+            (errorparameter_t)0);
+         return E_FAIL;
+      }
+
+      if (matchlen==15) {
+         matchType = RH3_6LOTH_TYPE_0;
+         addrIndex = 15;
+      } else if (matchlen==14) {
+         matchType = RH3_6LOTH_TYPE_1;
+         addrIndex = 14;
+      } else if (matchlen>=12) {
+         matchType = RH3_6LOTH_TYPE_2;
+         addrIndex = 12;
+      } else if (matchlen>=8) {
+         matchType = RH3_6LOTH_TYPE_3;
+         addrIndex = 8;
+      } else {
+         matchType = RH3_6LOTH_TYPE_4;
+         addrIndex = 0;
+      }
+
+      if (matchType!=rh3Type) {
+         typeStart         = typePos;
+         typeSize          = 0;
+      } else {
+         typeSize++;
+      }
+      // Write/Update 2 header bytes
+      rh3buf[typeStart] = CRITICAL_6LORH|typeSize;
+      if (matchType!=rh3Type) {
+         typePos++;                      // skip past byte just written
+         rh3buf[typePos++] = matchType;
+      }
+      // Write rightmost address bytes for the header type
+      memcpy(&rh3buf[typePos],&srcRoute->hop[i]->address.addr_128b[addrIndex],16-addrIndex);
+      typePos += 16-addrIndex;
+
+      if (matchType != rh3Type) {
+         rh3Type = matchType;
+      }
+      compressRef = srcRoute->hop[i]->address;
+   }
+   
+   // set layer 2 next hop
+   packetfunctions_ip128bToMac64b(
+      &srcRoute->hop[srcRoute->hopCount-1]->address,
+      &temp_prefix,
+      &msg->l2_nextORpreviousHop);
+   
+   // send to next lower layer
+   return iphc_sendFromForwarding(
+      msg,
+      ipv6_outer_header,
+      ipv6_inner_header,
+      rpl_option,
+      &ipv6_outer_header->flow_label,
+      &rh3buf[0],
+      typePos,
+      PCKTSEND
+   );
+}
 
 /**
 \brief Create a RPL option.
