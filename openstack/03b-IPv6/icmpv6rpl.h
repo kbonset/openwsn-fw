@@ -63,6 +63,11 @@ enum{
   OPTION_TRANSIT_INFORMATION_TYPE = 0x06,
 };
 
+// Operational status of RPL module
+#define RPL_STATUS_INIT  0x01
+#define RPL_STATUS_RUNOK 0x02
+
+
 //=========================== static ==========================================
 
 /**
@@ -140,6 +145,7 @@ typedef struct {
    // admin
    bool                      busySending;             ///< currently sending DIO/DAO.
    uint8_t                   fDodagidWritten;         ///< is DODAGID already written to DIO/DAO?
+   uint8_t                   opStatus;                ///< operational status of RPL module
    // DIO-related
    icmpv6rpl_dio_ht          dio;                     ///< pre-populated DIO packet.
    open_addr_t               dioDestination;          ///< IPv6 destination address for DIOs.
@@ -165,6 +171,7 @@ uint8_t  icmpv6rpl_getRPLIntanceID(void);
 void     icmpv6rpl_getRPLDODAGid(uint8_t* address_128b);
 void     icmpv6rpl_setDIOPeriod(uint16_t dioPeriod);
 void     icmpv6rpl_setDAOPeriod(uint16_t daoPeriod);
+uint8_t  icmpv6rpl_getOpStatus(void);
 /**
 \}
 \}
