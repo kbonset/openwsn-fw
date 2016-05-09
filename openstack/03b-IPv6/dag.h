@@ -34,7 +34,7 @@ struct dagnbr {
 \brief A mote in the DAG; includes a linked list of potential parent neighbors
  */
 struct dagnode {
-    open_addr_t address;
+    open_addr_t address;   /**< Address always is 128 bits */
     dagnbr_t* neighbor;
 };
 
@@ -57,8 +57,8 @@ typedef struct {
 
 //=========================== prototypes ======================================
 
-void dag_init(void);
-void dag_getRoute(dag_route_t* route, open_addr_t* dest);
+void      dag_init(void);
+owerror_t dag_buildRoute(dag_route_t* route, open_addr_t* dest);
 
 /**
 \}

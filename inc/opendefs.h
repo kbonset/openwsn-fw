@@ -152,7 +152,7 @@ enum {
    COMPONENT_ICMPv6ECHO                = 0x14,
    COMPONENT_ICMPv6ROUTER              = 0x15,
    COMPONENT_ICMPv6RPL                 = 0x16,
-   COMPONENT_DAG                       = 0x30,
+   COMPONENT_DAG                       = 0x50,
    //TRAN
    COMPONENT_OPENTCP                   = 0x17,
    COMPONENT_OPENUDP                   = 0x18,
@@ -205,6 +205,7 @@ enum {
    ERR_WRONG_DIRECTION                 = 0x13, // upstream packet set to be downstream, possible loop.
    ERR_PREFIXES_DIFFER                 = 0x50, // expected prefixes to be the same
    ERR_NO_ROUTE                        = 0x51, // no route from destination; found {0} hops; code {1}
+   ERR_INVALID_ROUTE                   = 0x52, // route not valid; code {0}
    // l2b
    ERR_NEIGHBORS_FULL                  = 0x14, // neighbors table is full (max number of neighbor is {0})
    ERR_NO_SENT_PACKET                  = 0x15, // there is no sent packet in queue
