@@ -224,12 +224,15 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       // Clean up confirmable tracking
       if (found==TRUE && (coap_header.T==COAP_TYPE_ACK || coap_header.T==COAP_TYPE_RES)) {
          confirmer=&temp_desc->confirmable;
-         if (confirmer->timerId!=UINT8_MAX) {
-            // intercept timer before timeout
-            opentimers_stop(confirmer->timerId);
+         // Validate response not already handled
+         if (confirmer->msg != NULL) {
+            if (confirmer->timerId!=UINT8_MAX) {
+               // intercept timer before timeout
+               opentimers_stop(confirmer->timerId);
+            }
+            openqueue_freePacketBuffer(confirmer->msg);
+            confirmer->msg = NULL;
          }
-         openqueue_freePacketBuffer(confirmer->msg);
-         confirmer->msg = NULL;
       }
       
       // free the received packet
