@@ -225,10 +225,11 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       if (found==TRUE && (coap_header.T==COAP_TYPE_ACK || coap_header.T==COAP_TYPE_RES)) {
          confirmer=&temp_desc->confirmable;
          // Validate response not already handled
-         if (confirmer->msg != NULL) {
+         if (confirmer->msg!=NULL) {
             if (confirmer->timerId!=UINT8_MAX) {
                // intercept timer before timeout
                opentimers_stop(confirmer->timerId);
+               confirmer->timerId = UINT8_MAX;
             }
             openqueue_freePacketBuffer(confirmer->msg);
             confirmer->msg = NULL;
@@ -320,6 +321,7 @@ void opencoap_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
    //=== mine
    if (msg->creator==COMPONENT_OPENCOAP) {
       openqueue_freePacketBuffer(msg);
+      // does not support confirmable message; no handling required
       return;
    }
    //=== someone else's
@@ -397,6 +399,8 @@ void opencoap_ackTimeout(opentimer_id_t id) {
    }
 
    if (confirmer!=NULL) {
+      confirmer->timerId = UINT8_MAX;
+
       if (confirmer->txCount==COAP_CON_TX_MAX || resource->callbackConRetry==NULL) {
          // retries exhausted or no retry callback
          if (resource->callbackConFail!=NULL) {
@@ -407,8 +411,6 @@ void opencoap_ackTimeout(opentimer_id_t id) {
          confirmer->msg = NULL;
          
       } else {
-         confirmer->timerId = UINT8_MAX;
-
          // defer resend to app since currently in interrupt mode
          scheduler_push_task(resource->callbackConRetry,TASKPRIO_COAP);
       }
@@ -507,6 +509,10 @@ void opencoap_register(coap_resource_desc_t* desc) {
       last_elem = last_elem->next;
    }
    last_elem->next = desc;
+   
+   // initialize confirmable state
+   desc->confirmable.msg     = NULL;
+   desc->confirmable.timerId = UINT8_MAX;
 }
 
 /**
@@ -576,12 +582,18 @@ owerror_t opencoap_send(
 
    // setup tracking for a confirmable request
    if (type==COAP_TYPE_CON) {
+      if (descSender->confirmable.msg!=NULL) {
+         openserial_printError(
+            COMPONENT_OPENCOAP,ERR_BUSY_SENDING,
+            (errorparameter_t)0,
+            (errorparameter_t)0
+         );
+         return E_FAIL;
+      }
       descSender->confirmable.msg     = msg;
       descSender->confirmable.timerId = UINT8_MAX;
       descSender->confirmable.timeout = 0;
       descSender->confirmable.txCount = 0;
-   } else {
-      descSender->confirmable.msg     = NULL;
    }
    
    return openudp_send(msg);
