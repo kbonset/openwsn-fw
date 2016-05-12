@@ -170,6 +170,8 @@ enum {
    COMPONENT_UINJECT                   = 0x24,
    COMPONENT_RRT                       = 0x25,
    COMPONENT_SECURITY                  = 0x26,
+   COMPONENT_HELLO                     = 0x30,
+   COMPONENT_WELCOME                   = 0x31,
 };
 
 /**
@@ -249,6 +251,8 @@ enum {
    ERR_SIXTOP_COUNT                    = 0x3d, // there are {0} cells to request mote
    ERR_SIXTOP_LIST                     = 0x3e, // the cells reserved to request mote contains slot {0} and slot {1}
    ERR_SCHEDULE_ADDDUPLICATESLOT       = 0x3f, // the slot {0} to be added is already in schedule
+
+   ERR_DEBUG                           = 0xf0, // debug p0: {0}; p1: {1}
 };
 
 //=========================== typedef =========================================
