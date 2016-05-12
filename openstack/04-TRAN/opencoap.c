@@ -200,6 +200,10 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
             if (coap_header.T==COAP_TYPE_ACK || coap_header.T==COAP_TYPE_RES) {
                 if (coap_header.messageID==temp_desc->last_request.messageID) {
                     found=TRUE;
+                    if (temp_desc->confirmable.msg==NULL) {
+                        // Likely a duplicate ACK; don't execute callback again
+                        break;
+                    }
                 }
             } else {
                 found=TRUE;
