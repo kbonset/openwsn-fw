@@ -165,10 +165,11 @@ struct coap_resource_desc_t {
    bool                  discoverable;
    callbackRx_cbt        callbackRx;
    callbackSendDone_cbt  callbackSendDone;   /**< handler must free message buffer
-                                                  for non-confirmable messages */
+                                                  for non-confirmable requests and
+                                                  all replies */
    coap_header_iht       last_request;
-   coap_confirmable_t    confirmable;        /**> state for a confirmable request */
-   callbackConRetry_cbt  callbackConRetry;   /**< retries sending a confirmable request*/
+   coap_confirmable_t    confirmable;        /**< state for a confirmable request */
+   callbackConRetry_cbt  callbackConRetry;   /**< retry sending a confirmable request*/
    callbackConFail_cbt   callbackConFail;    /**< confirmable message retries exhausted;
                                                   handler must free message buffer */
    coap_resource_desc_t* next;
