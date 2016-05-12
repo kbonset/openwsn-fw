@@ -137,7 +137,7 @@ typedef struct coap_confirmable_t {
    OpenQueueEntry_t*     msg;            /**< message being sent, reuse with each resend;
                                               a non-NULL value means record is valid */
    opentimer_id_t        timerId;        /**< timer while CON message outstanding;
-                                              UINT_MAX otherwise */
+                                              UINT8_MAX otherwise */
    uint16_t              timeout;        /**< length of the first timeout, in millis;
                                               subsequent timeouts recalculated so this
                                               attribute can be expressed in two bytes */
