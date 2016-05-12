@@ -224,7 +224,6 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       // Clean up confirmable tracking
       if (found==TRUE && (coap_header.T==COAP_TYPE_ACK || coap_header.T==COAP_TYPE_RES)) {
          confirmer=&temp_desc->confirmable;
-         // Validate response not already handled
          if (confirmer->msg!=NULL) {
             if (confirmer->timerId!=UINT8_MAX) {
                // intercept timer before timeout
