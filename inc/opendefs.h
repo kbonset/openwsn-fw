@@ -171,6 +171,8 @@ enum {
    COMPONENT_UINJECT                   = 0x24,
    COMPONENT_RRT                       = 0x25,
    COMPONENT_SECURITY                  = 0x26,
+   COMPONENT_HELLO                     = 0x30,
+   COMPONENT_WELCOME                   = 0x31,
 };
 
 /**
@@ -252,6 +254,8 @@ enum {
    ERR_SIXTOP_RETURNCODE               = 0x3c, // sixtop return code {0} at sixtop state {1}
    ERR_SIXTOP_COUNT                    = 0x3d, // there are {0} cells to request mote
    ERR_SIXTOP_LIST                     = 0x3e, // the cells reserved to request mote contains slot {0} and slot {1}
+
+   ERR_DEBUG                           = 0xf0, // debug p0: {0}; p1: {1}
 };
 
 //=========================== typedef =========================================
