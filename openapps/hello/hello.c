@@ -75,6 +75,10 @@ owerror_t hello_receive(OpenQueueEntry_t* msg,
       coap_header->Code<=COAP_CODE_REQ_DELETE
    ) {
       coap_header->Code = COAP_CODE_RESP_VALID;
+      // Must reset payload since we reuse packet for response
+      msg->payload      = &(msg->packet[127]);
+      msg->length       = 0;
+      
       if (idmanager_getIsDAGroot()==TRUE) {
          welcome_send(&msg->l3_sourceAdd);
       }

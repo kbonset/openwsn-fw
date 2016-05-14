@@ -78,6 +78,10 @@ owerror_t welcome_receive(OpenQueueEntry_t* msg,
       coap_header->Code<=COAP_CODE_REQ_DELETE
    ) {
       coap_header->Code = COAP_CODE_RESP_VALID;
+      // Must reset payload since we reuse packet for response
+      msg->payload      = &(msg->packet[127]);
+      msg->length       = 0;
+
    } else {
       openserial_printInfo(COMPONENT_WELCOME, ERR_DEBUG, 2, 0);
    }
