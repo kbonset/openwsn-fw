@@ -27,6 +27,7 @@ typedef struct {
    opentimer_id_t       timerId;
    coap_resource_desc_t desc;
    open_addr_t          dest_addr;
+   bool                 isConfirmable;
 } welcome_vars_t;
 
 //=========================== variables =======================================

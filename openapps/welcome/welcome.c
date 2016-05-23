@@ -60,6 +60,7 @@ void welcome_init() {
    welcome_vars.dest_addr.type            = ADDR_NONE;
    // initialize to sentinel value to know if running
    welcome_vars.timerId                   = MAX_NUM_TIMERS;
+   welcome_vars.isConfirmable             = TRUE;
    
    opencoap_register(&welcome_vars.desc);
 }
@@ -69,8 +70,9 @@ void welcome_init() {
 owerror_t welcome_receive(OpenQueueEntry_t* msg,
                       coap_header_iht* coap_header,
                       coap_option_iht* coap_options) {
-   // Only useful for non-confirmable messaging
-   //opentimers_stop(welcome_vars.timerId);
+   if (welcome_vars.isConfirmable == FALSE) {
+      opentimers_stop(welcome_vars.timerId);
+   }
 
    // Set response code if received a request
    if (
@@ -119,6 +121,7 @@ void welcome_start_timer(uint32_t delay) {
 void welcome_task() {    
    OpenQueueEntry_t* pkt;
    owerror_t         outcome;
+   coap_type_t       msgType;
 
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) {
@@ -160,9 +163,11 @@ void welcome_task() {
    // Send to designated mote
    pkt->l3_destinationAdd.type = ADDR_128B;
    memcpy(&pkt->l3_destinationAdd.addr_128b[0],&welcome_vars.dest_addr.addr_128b[0],16);
+   msgType         = (welcome_vars.isConfirmable == TRUE)
+                            ? COAP_TYPE_CON : COAP_TYPE_NON;
    // send
    outcome = opencoap_send(pkt,
-                           COAP_TYPE_CON,
+                           msgType,
                            COAP_CODE_REQ_POST,
                            2,
                            &welcome_vars.desc);
@@ -174,7 +179,8 @@ void welcome_task() {
 }
 
 void welcome_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
-   // Only useful for server-side (non-confirmable) ACK
+   // Only useful for a non-confirmable message, including an ACK at the server
+   // of a confirmable message.
    if (welcome_vars.desc.confirmable.msg==NULL) {
       openqueue_freePacketBuffer(msg);
    } else {
