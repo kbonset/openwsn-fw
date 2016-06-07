@@ -47,6 +47,12 @@ void      forwarding_createRplOption(
    rpl_option_ht*       rpl_option,
    uint8_t              flags
 );
+void      forwarding_optimize128bForIphc(
+   open_addr_t* src128b,
+   open_addr_t* dst128b,
+   open_addr_t* srcOpt,
+   open_addr_t* dstOpt
+);
 
 
 //=========================== public ==========================================
@@ -73,12 +79,10 @@ owerror_t forwarding_send_up(OpenQueueEntry_t* msg) {
     open_addr_t*         myadd64;
     uint32_t             flow_label = 0;
 
-    open_addr_t          temp_dest_prefix;
-    open_addr_t          temp_dest_mac64b;
+    open_addr_t          temp_dest_host;
     open_addr_t*         p_dest;
     open_addr_t*         p_src;  
-    open_addr_t          temp_src_prefix;
-    open_addr_t          temp_src_mac64b; 
+    open_addr_t          temp_src_host; 
     uint8_t              sam;
     uint8_t              m;
     uint8_t              dam;
@@ -114,16 +118,29 @@ owerror_t forwarding_send_up(OpenQueueEntry_t* msg) {
       0x00              // flags
     );
 
-    packetfunctions_ip128bToMac64b(&(msg->l3_destinationAdd),&temp_dest_prefix,&temp_dest_mac64b);
-    //xv poipoi -- get the src prefix as well
-    packetfunctions_ip128bToMac64b(&(msg->l3_sourceAdd),&temp_src_prefix,&temp_src_mac64b);
-    //XV -poipoi we want to check if the source address prefix is the same as destination prefix
-    if (packetfunctions_sameAddress(&temp_dest_prefix,&temp_src_prefix)) {
-         // same prefix use 64B address
-         sam = IPHC_SAM_64B;
-         dam = IPHC_DAM_64B;
-         p_dest = &temp_dest_mac64b;      
-         p_src  = &temp_src_mac64b; 
+    forwarding_optimize128bForIphc(&(msg->l3_sourceAdd), &(msg->l3_destinationAdd),
+                                   &temp_src_host, &temp_dest_host);
+
+    if (temp_src_host.type==ADDR_128B) {
+        // Expecting same prefix since originating at DAG root
+        openserial_printError(
+            COMPONENT_FORWARDING,ERR_PREFIXES_DIFFER,
+            (errorparameter_t)0,
+            (errorparameter_t)0
+        );
+        return E_FAIL;
+    }
+
+    if (temp_src_host.type==ADDR_16B) {
+        sam = IPHC_SAM_16B;
+        dam = IPHC_DAM_16B;
+        p_src  = &temp_src_host;
+        p_dest = &temp_dest_host;
+    } else if (temp_src_host.type==ADDR_64B) {
+        sam = IPHC_SAM_64B;
+        dam = IPHC_DAM_64B;
+        p_src  = &temp_src_host;
+        p_dest = &temp_dest_host;
     } else {
         //not the same prefix. so the packet travels to another network
         //check if this is a source routing pkt. in case it is then the DAM is elided as it is in the SrcRouting header.
@@ -194,12 +211,10 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg, dag_route_t* srcRoute) {
     open_addr_t*         myadd64;
     uint32_t             flow_label = 0;
 
-    open_addr_t          temp_dest_prefix;
-    open_addr_t          temp_dest_mac64b;
+    open_addr_t          temp_dest_host;
     open_addr_t*         p_dest;
     open_addr_t*         p_src;  
-    open_addr_t          temp_src_prefix;
-    open_addr_t          temp_src_mac64b; 
+    open_addr_t          temp_src_host; 
     uint8_t              sam;
     uint8_t              m;
     uint8_t              dam;
@@ -236,18 +251,11 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg, dag_route_t* srcRoute) {
     // However, we trick iphc_sendFromForwarding() into not writing the hop-by-hop
     // header, which is not used for a downward route.
     rpl_option.optionType = 0;
-    
-    packetfunctions_ip128bToMac64b(&(msg->l3_destinationAdd),&temp_dest_prefix,&temp_dest_mac64b);
-    //xv poipoi -- get the src prefix as well
-    packetfunctions_ip128bToMac64b(&(msg->l3_sourceAdd),&temp_src_prefix,&temp_src_mac64b);
-    //XV -poipoi we want to check if the source address prefix is the same as destination prefix
-    if (packetfunctions_sameAddress(&temp_dest_prefix,&temp_src_prefix)) {
-         // same prefix use 64B address
-         sam = IPHC_SAM_64B;
-         dam = IPHC_DAM_64B;
-         p_dest = &temp_dest_mac64b;      
-         p_src  = &temp_src_mac64b; 
-    } else {
+
+    forwarding_optimize128bForIphc(&(msg->l3_sourceAdd), &(msg->l3_destinationAdd),
+                                   &temp_src_host, &temp_dest_host);
+
+    if (temp_src_host.type==ADDR_128B) {
         // Expecting same prefix since originating at DAG root
         openserial_printError(
             COMPONENT_FORWARDING,ERR_PREFIXES_DIFFER,
@@ -256,6 +264,17 @@ owerror_t forwarding_send_down(OpenQueueEntry_t* msg, dag_route_t* srcRoute) {
         );
         return E_FAIL;
     }
+
+    if (temp_src_host.type==ADDR_16B) {
+        sam = IPHC_SAM_16B;
+        dam = IPHC_DAM_16B;
+    } else if (temp_src_host.type==ADDR_64B) {
+        sam = IPHC_SAM_64B;
+        dam = IPHC_DAM_64B;
+    }
+    p_src  = &temp_src_host;
+    p_dest = &temp_dest_host;
+
     //IPHC inner header and NHC IPv6 header will be added at here
     iphc_prependIPv6Header(msg,
                 IPHC_TF_ELIDED,
@@ -1037,4 +1056,45 @@ void forwarding_createRplOption(rpl_option_ht* rpl_option, uint8_t flags) {
     }
     
     rpl_option->flags = (flags & ~I_FLAG & ~K_FLAG) | (I<<1) | K;
+}
+
+/**
+\brief Optimize the endpoint addresses from 128-bit down to 64-bit or 16-bit,
+       for use with RFC 6282 header compression.
+
+Uses 64-bit if prefixes match; 16-bit if furthermore the 64-bit host addresses are
+in the form 0000:00FF:FE00:xxxx, where 'x' is any hex character.
+
+\param[in] src128b Source 128-bit address
+\param[in] dst128b Destination 128-bit address
+\param[out] srcOpt Optimized source address
+\param[out] dstOpt Optimized destination address
+*/
+void forwarding_optimize128bForIphc(open_addr_t* src128b, open_addr_t* dst128b,
+                                    open_addr_t* srcOpt, open_addr_t* dstOpt) {
+   open_addr_t src_prefix;
+   open_addr_t dst_prefix;
+   open_addr_t temp_src;
+   open_addr_t temp_dst;
+   uint8_t addr16b[6] = {0x00, 0x00, 0x00, 0xFF, 0xFE, 0x00};
+   uint8_t matchlen;
+   
+   packetfunctions_ip128bToMac64b(src128b,&src_prefix,&temp_src);
+   packetfunctions_ip128bToMac64b(dst128b,&dst_prefix,&temp_dst);
+   
+   if (packetfunctions_sameAddress(&src_prefix,&dst_prefix)) {
+
+      for (matchlen=0; matchlen<6; matchlen++) {
+         if (temp_src.addr_64b[matchlen] != addr16b[matchlen]
+               || temp_src.addr_64b[matchlen] != temp_dst.addr_64b[matchlen])
+            break;
+      }
+      if (matchlen==6) {
+         packetfunctions_mac64bToMac16b(&temp_src, srcOpt);
+         packetfunctions_mac64bToMac16b(&temp_dst, dstOpt);
+      } else {
+         packetfunctions_ip128bToMac64b(src128b,&src_prefix,srcOpt);
+         packetfunctions_ip128bToMac64b(dst128b,&dst_prefix,dstOpt);
+      }
+   }
 }

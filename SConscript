@@ -369,7 +369,9 @@ if env['ide']=='qtcreator':
 else:
     print env['ide']
     
-    
+if env['addr64b']:
+    env.Append(CPPDEFINES = {'ADDR64B' : env['addr64b']})
+
 #============================ upload over JTAG ================================
 
 def jtagUploadFunc(location):

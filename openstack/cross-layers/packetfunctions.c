@@ -58,6 +58,10 @@ void packetfunctions_mac64bToMac16b(open_addr_t* mac64b, open_addr_t* mac16btoWr
    mac16btoWrite->addr_16b[0] = mac64b->addr_64b[6];
    mac16btoWrite->addr_16b[1] = mac64b->addr_64b[7];
 }
+
+/**
+\brief Convert a 16-bit address for RFC 6282 header compression to a 64-bit address
+*/
 void packetfunctions_mac16bToMac64b(open_addr_t* mac16b, open_addr_t* mac64btoWrite) {
    if (mac16b->type!=ADDR_16B) {
       openserial_printCritical(COMPONENT_PACKETFUNCTIONS,ERR_WRONG_ADDR_TYPE,
@@ -67,12 +71,12 @@ void packetfunctions_mac16bToMac64b(open_addr_t* mac16b, open_addr_t* mac64btoWr
       return;
    }
    mac64btoWrite->type = ADDR_64B;
-   mac64btoWrite->addr_64b[0] = 0;
-   mac64btoWrite->addr_64b[1] = 0;
-   mac64btoWrite->addr_64b[2] = 0;
-   mac64btoWrite->addr_64b[3] = 0;
-   mac64btoWrite->addr_64b[4] = 0;
-   mac64btoWrite->addr_64b[5] = 0;
+   mac64btoWrite->addr_64b[0] = 0x00;
+   mac64btoWrite->addr_64b[1] = 0x00;
+   mac64btoWrite->addr_64b[2] = 0x00;
+   mac64btoWrite->addr_64b[3] = 0xFF;
+   mac64btoWrite->addr_64b[4] = 0xFE;
+   mac64btoWrite->addr_64b[5] = 0x00;
    mac64btoWrite->addr_64b[6] = mac16b->addr_16b[0];
    mac64btoWrite->addr_64b[7] = mac16b->addr_16b[1];
 }

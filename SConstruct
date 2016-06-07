@@ -1,6 +1,7 @@
 import os
 import sys
 import platform
+import string
 import SCons
 
 #============================ banner ==========================================
@@ -78,9 +79,11 @@ project:
     cryptoengine   Select appropriate crypto engine implementation
                    (dummy_crypto_engine, firmware_crypto_engine, 
                    board_crypto_engine).
-    l2_security   Use hop-by-hop encryption and authentication.
-    goldenImage   sniffer, root or none(default)
-    ide           qtcreator
+    l2_security    Use hop-by-hop encryption and authentication.
+    goldenImage    sniffer, root or none(default)
+    ide            qtcreator
+    addr64b        64-bit address for this mote, in format:
+                   hhhh:hhhh:hhhh:hhhh
 
     Common variables:
     verbose        Print each complete compile/link command.
@@ -161,6 +164,27 @@ def validate_apps(key, value, env):
                 ','.join(availableApps),
             )
         )
+
+def validate_64b_address(key, value, env):
+    """Validate format is hhhh:hhhh:hhhh:hhhh, or an empty string"""
+    is_ok = False
+    if len(value) == 19 or len(value) == 0:
+        for i in list(range(len(value))):
+            if (i+1) % 5 == 0:
+                if value[i] == ':':
+                    pass
+                else:
+                    break
+            elif value[i] in string.hexdigits:
+                pass
+            else:
+                break
+        else:
+            is_ok = True
+    
+    if not is_ok:
+        raise ValueError("Must format address as hhhh:hhhh:hhhh:hhhh, where 'h' is a hex digit")
+
 
 # Define default value for simhost option
 if os.name=='nt':
@@ -302,6 +326,13 @@ command_line_vars.AddVariables(
         'qtcreator by now',                               # help
         command_line_options['ide'][0],                   # default
         validate_option,                                   # validator
+        None,                                              # converter
+    ),
+    (
+        'addr64b',                                         # key
+        '64-bit address',                                  # help
+        '',                                                # default
+        validate_64b_address,                              # validator
         None,                                              # converter
     ),
 )

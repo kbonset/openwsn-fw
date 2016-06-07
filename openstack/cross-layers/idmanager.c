@@ -12,9 +12,13 @@ idmanager_vars_t idmanager_vars;
 
 //=========================== prototypes ======================================
 
+uint8_t idmanager_atoh(char c);
+
 //=========================== public ==========================================
 
 void idmanager_init() {
+   uint8_t i,j;
+   char *addr64b;
    
    // reset local variables
    memset(&idmanager_vars, 0, sizeof(idmanager_vars_t));
@@ -50,7 +54,27 @@ void idmanager_init() {
    
    // my64bID
    idmanager_vars.my64bID.type         = ADDR_64B;
+#ifdef ADDR64B
+   // Read from string in format: 'hhhh:hhhh:hhhh:hhhh'
+
+   // Stringify the ADDR64B macro value.
+   #define STRINGIFY(s) #s
+   #define ADDR64B_STR(s) STRINGIFY(s)
+
+   addr64b = ADDR64B_STR(ADDR64B);
+   j       = 0;                // compensates byte index for colons in string
+   for (i=0; i<19; i+=2) {
+      // skip over colon
+      if ((i+1) % 5 == 0) {
+         i++;
+         j++;
+      }
+      idmanager_vars.my64bID.addr_64b[(i-j)/2] = (idmanager_atoh(addr64b[i]) << 4)
+                                                + idmanager_atoh(addr64b[i+1]);
+   }
+#else   
    eui64_get(idmanager_vars.my64bID.addr_64b);
+#endif
    
    // my16bID
    packetfunctions_mac64bToMac16b(&idmanager_vars.my64bID,&idmanager_vars.my16bID);
@@ -263,3 +287,17 @@ bool debugPrint_id() {
 
 
 //=========================== private =========================================
+
+/**
+\brief Converts a hex character to a base 16 digit; 0 if not a hex character
+ */
+uint8_t idmanager_atoh(char c) {
+  if (c>='0' && c<='9')
+     return c - '0';
+  else if (c>='A' && c<='F')
+     return c - 'A' + 10;
+  else if (c>='a' && c<='f')
+     return c - 'a' + 10;
+  else
+     return 0;
+}
