@@ -17,8 +17,10 @@ uint8_t idmanager_atoh(char c);
 //=========================== public ==========================================
 
 void idmanager_init() {
+#ifdef ADDR64B
    uint8_t i,j;
    char *addr64b;
+#endif
    
    // reset local variables
    memset(&idmanager_vars, 0, sizeof(idmanager_vars_t));

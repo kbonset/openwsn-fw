@@ -115,8 +115,24 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
       IEEE802154_SECURITY.prependAuxiliarySecurityHeader(msg);
    }
 
-   // previousHop address (always 64-bit)
-   packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_64B),OW_LITTLE_ENDIAN);
+   // previousHop address
+   if (packetfunctions_isBroadcastMulticast(nextHop)) {
+      packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_64B),OW_LITTLE_ENDIAN);
+   } else {
+      switch (nextHop->type) {
+         case ADDR_16B:
+            packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_16B),OW_LITTLE_ENDIAN);
+            break;
+         case ADDR_64B:
+            packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_64B),OW_LITTLE_ENDIAN);
+            break;
+         default:
+            openserial_printCritical(COMPONENT_IEEE802154,ERR_WRONG_ADDR_TYPE,
+                                  (errorparameter_t)nextHop->type,
+                                  (errorparameter_t)1);
+      }
+   }
+
    // nextHop address
    if (packetfunctions_isBroadcastMulticast(nextHop)) {
       //broadcast address is always 16-bit
@@ -133,9 +149,8 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
          default:
             openserial_printCritical(COMPONENT_IEEE802154,ERR_WRONG_ADDR_TYPE,
                                   (errorparameter_t)nextHop->type,
-                                  (errorparameter_t)1);
+                                  (errorparameter_t)2);
       }
-      
    }
    // destpan -- se page 41 of 15.4-2011 std. DEST PANID only sent as it is equal to SRC PANID
    packetfunctions_writeAddress(msg,idmanager_getMyID(ADDR_PANID),OW_LITTLE_ENDIAN);
@@ -160,7 +175,19 @@ void ieee802154_prependHeader(OpenQueueEntry_t* msg,
          // no need for a default, since it would have been caught above.
       }
    }
-   temp_8b             |= IEEE154_ADDR_EXT                << IEEE154_FCF_SRC_ADDR_MODE;
+   if (packetfunctions_isBroadcastMulticast(nextHop)) {
+      temp_8b          |= IEEE154_ADDR_EXT                 << IEEE154_FCF_SRC_ADDR_MODE;
+   } else {
+       switch (nextHop->type) {
+          case ADDR_16B:
+             temp_8b    |= IEEE154_ADDR_SHORT              << IEEE154_FCF_SRC_ADDR_MODE;
+             break;
+          case ADDR_64B:
+             temp_8b    |= IEEE154_ADDR_EXT                << IEEE154_FCF_SRC_ADDR_MODE;
+             break;
+       }
+   }
+
    //poipoi xv IE list present
    temp_8b             |= ielistpresent                   << IEEE154_FCF_IELIST_PRESENT;
    temp_8b             |= IEEE154_FRAMEVERSION_2012       << IEEE154_FCF_FRAME_VERSION;

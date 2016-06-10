@@ -590,7 +590,10 @@ port_INLINE void activity_synchronize_endOfFrame(PORT_RADIOTIMER_WIDTH capturedT
       // store header details in packet buffer
       ieee154e_vars.dataReceived->l2_frameType = ieee802514_header.frameType;
       ieee154e_vars.dataReceived->l2_dsn       = ieee802514_header.dsn;
-      memcpy(&(ieee154e_vars.dataReceived->l2_nextORpreviousHop),&(ieee802514_header.src),sizeof(open_addr_t));
+      if (ieee802514_header.src.type==ADDR_16B)
+         packetfunctions_mac16bToMac64b(&ieee802514_header.src, &(ieee154e_vars.dataReceived->l2_nextORpreviousHop));
+      else
+         memcpy(&(ieee154e_vars.dataReceived->l2_nextORpreviousHop),&(ieee802514_header.src),sizeof(open_addr_t));
 
       if (ieee154e_vars.dataReceived->l2_securityLevel != IEEE154_ASH_SLF_TYPE_NOSEC) {
          // If we are not synced, we need to parse IEs and retrieve the ASN
@@ -1333,7 +1336,10 @@ port_INLINE void activity_ti9(PORT_RADIOTIMER_WIDTH capturedTime) {
       // store header details in packet buffer
       ieee154e_vars.ackReceived->l2_frameType  = ieee802514_header.frameType;
       ieee154e_vars.ackReceived->l2_dsn        = ieee802514_header.dsn;
-      memcpy(&(ieee154e_vars.ackReceived->l2_nextORpreviousHop),&(ieee802514_header.src),sizeof(open_addr_t));
+      if (ieee802514_header.src.type==ADDR_16B)
+         packetfunctions_mac16bToMac64b(&ieee802514_header.src, &(ieee154e_vars.ackReceived->l2_nextORpreviousHop));
+      else
+         memcpy(&(ieee154e_vars.ackReceived->l2_nextORpreviousHop),&(ieee802514_header.src),sizeof(open_addr_t));
 
       // check the security level of the ACK frame and decrypt/authenticate
       if (ieee154e_vars.ackReceived->l2_securityLevel != IEEE154_ASH_SLF_TYPE_NOSEC) {
@@ -1537,7 +1543,10 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
       ieee154e_vars.dataReceived->l2_frameType      = ieee802514_header.frameType;
       ieee154e_vars.dataReceived->l2_dsn            = ieee802514_header.dsn;
       ieee154e_vars.dataReceived->l2_IEListPresent  = ieee802514_header.ieListPresent;
-      memcpy(&(ieee154e_vars.dataReceived->l2_nextORpreviousHop),&(ieee802514_header.src),sizeof(open_addr_t));
+      if (ieee802514_header.src.type==ADDR_16B)
+         packetfunctions_mac16bToMac64b(&ieee802514_header.src, &(ieee154e_vars.dataReceived->l2_nextORpreviousHop));
+      else
+         memcpy(&(ieee154e_vars.dataReceived->l2_nextORpreviousHop),&(ieee802514_header.src),sizeof(open_addr_t));
 
       // if security is enabled, decrypt/authenticate the frame.
       if (ieee154e_vars.dataReceived->l2_securityLevel != IEEE154_ASH_SLF_TYPE_NOSEC) {

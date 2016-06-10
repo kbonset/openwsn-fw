@@ -623,6 +623,8 @@ owerror_t sixtop_send_internal(
    OpenQueueEntry_t* msg, 
    bool    payloadIEPresent) {
 
+   open_addr_t addr16b;
+   
    // assign a number of retries
    if (
       packetfunctions_isBroadcastMulticast(&(msg->l2_nextORpreviousHop))==TRUE
@@ -637,12 +639,18 @@ owerror_t sixtop_send_internal(
    msg->l2_numTxAttempts = 0;
    // transmit with the default TX power
    msg->l1_txPower = TX_POWER;
+   // compress destination address if feasible
+   if (packetfunctions_isCompressible(idmanager_getMyID(ADDR_64B),
+                                      &(msg->l2_nextORpreviousHop)))
+      packetfunctions_mac64bToMac16b(&(msg->l2_nextORpreviousHop), &addr16b);
+   else
+      addr16b.type = ADDR_NONE;
    // add a IEEE802.15.4 header
    ieee802154_prependHeader(msg,
                             msg->l2_frameType,
                             payloadIEPresent,
                             msg->l2_dsn,
-                            &(msg->l2_nextORpreviousHop)
+                            addr16b.type==ADDR_16B ? &addr16b : &(msg->l2_nextORpreviousHop)
                             );
    // change owner to IEEE802154E fetches it from queue
    msg->owner  = COMPONENT_SIXTOP_TO_IEEE802154E;

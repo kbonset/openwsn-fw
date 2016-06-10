@@ -198,6 +198,26 @@ bool packetfunctions_sameAddress(open_addr_t* address_1, open_addr_t* address_2)
    return FALSE;
 }
 
+/**
+\brief Determines if the 64-bit endpoint addresses may be compressed based on
+RFC 6282 header compression.
+
+\param[in] source Source address, 64-bit
+\param[in] dest Destination address, 64-bit
+\return TRUE if compressible; FALSE otherwise
+*/
+bool packetfunctions_isCompressible(open_addr_t* source, open_addr_t* dest) {
+   uint8_t addr16b[6] = {0x00, 0x00, 0x00, 0xFF, 0xFE, 0x00};
+   uint8_t matchlen;
+
+   for (matchlen=0; matchlen<6; matchlen++) {
+      if (source->addr_64b[matchlen] != addr16b[matchlen]
+            || source->addr_64b[matchlen] != dest->addr_64b[matchlen])
+         break;
+   }
+   return (matchlen==6) ? TRUE : FALSE;
+}
+
 //======= address read/write
 
 void packetfunctions_readAddress(uint8_t* payload, uint8_t type, open_addr_t* writeToAddress, bool littleEndian) {
