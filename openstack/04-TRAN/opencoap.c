@@ -53,6 +53,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    bool                      found;
    owerror_t                 outcome = 0;
    coap_confirmable_t*       confirmer;
+   coap_type_t               response_type;
    // local variables passed to the handlers (with msg)
    coap_header_iht           coap_header;
    coap_option_iht           coap_options[MAX_COAP_OPTIONS];
@@ -269,6 +270,12 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
       coap_header.TKL                  = 0;
       coap_header.Code                 = COAP_CODE_RESP_METHODNOTALLOWED;
    }
+
+   if (coap_header.T == COAP_TYPE_CON) {
+       response_type = COAP_TYPE_ACK;
+   } else {
+       response_type = COAP_TYPE_NON;
+   }
    
    //=== step 4. send that packet back
    
@@ -290,7 +297,7 @@ void opencoap_receive(OpenQueueEntry_t* msg) {
    // fill in CoAP header
    packetfunctions_reserveHeaderSize(msg,4+coap_header.TKL);
    msg->payload[0]                  = (COAP_VERSION    << 6) |
-                                      (COAP_TYPE_ACK   << 4) |
+                                      (response_type   << 4) |
                                       (coap_header.TKL << 0);
    msg->payload[1]                  = coap_header.Code;
    msg->payload[2]                  = coap_header.messageID/256;
